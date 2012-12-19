@@ -13,7 +13,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -62,8 +61,8 @@ public class WsEcl {
         }
     }
 
-    public static List parse(InputStream xml) throws Exception {
-        List results = null;
+    public static ArrayList parse(InputStream xml) throws Exception {
+        ArrayList results = null;
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -75,7 +74,7 @@ public class WsEcl {
         NodeList dsList = docElement.getElementsByTagName("Dataset");
         if (dsList != null && dsList.getLength() > 0) {
 
-            List dsArray = new ArrayList();
+            ArrayList dsArray = new ArrayList();
 
             results = dsArray;
 
@@ -85,7 +84,7 @@ public class WsEcl {
 
                 if (rowList != null && rowList.getLength() > 0) {
 
-                    List rowArray = new ArrayList();
+                    ArrayList rowArray = new ArrayList();
 
                     dsArray.add(rowArray);
 
@@ -94,7 +93,7 @@ public class WsEcl {
                         
                         NodeList columnList = row.getChildNodes();
                         
-                        List columnsArray = new ArrayList();
+                        ArrayList columnsArray = new ArrayList();
                         rowArray.add(columnsArray);
                         
                         for (int k = 0; k < columnList.getLength(); k++) {

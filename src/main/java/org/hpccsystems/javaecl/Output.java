@@ -249,10 +249,10 @@ public class Output implements EclCommand {
                              ecl += ",'" + file +"'";
 
                             if(!this.cluster.equals("")){
-                                ecl += ",CLUSTER("+this.cluster+")";
+                                ecl += ",CLUSTER('"+this.cluster+"')";
                             }
                             if(!this.encrypt.equals("")){
-                                ecl += ",ENCRYPT(" + this.encrypt + ")";
+                                ecl += ",ENCRYPT('" + this.encrypt + "')";
                             }
                             if(this.compressed.equals("Yes")){
                                 ecl += ",COMPRESSED";

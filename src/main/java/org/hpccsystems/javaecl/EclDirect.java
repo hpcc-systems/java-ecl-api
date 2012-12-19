@@ -46,6 +46,9 @@ public class EclDirect {
     private String mlPath;
     private String wuid;
     private String outputName = "";
+    
+    private String userName = "";
+    private String password = "";
     private boolean isValid = true;
     
     private String error = "";
@@ -53,6 +56,22 @@ public class EclDirect {
 
     
     
+    public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
     public String getError() {
 		return error;
 	}
@@ -291,6 +310,8 @@ public class EclDirect {
         es.setMlPath(mlPath); 
         es.setOutputName(outputName);
         es.setPort(Integer.parseInt(this.serverPort));
+        es.setUser(userName);
+        es.setPass(password);
         if(this.includeML.equals("true")){
             es.setIncludeML(true);
         }else{
@@ -442,16 +463,26 @@ public class EclDirect {
                                 //"----------Row-------------"
                                 ArrayList columnList = (ArrayList) rowList.get(jRow);
 
+                           
                                 for (int lCol = 0; lCol < columnList.size(); lCol++) {
                                  //"----------Column-------------"
                                     Column column = (Column) columnList.get(lCol);
-                                  
+                                    if(column.getValue().contains(",")){
+                                    	outStr += "\"" + column.getValue() + "\"";
+                                    }else{
                                     outStr += column.getValue();
+                                    }
+                                    //outStr += column.getValue();
                                     if(lCol< (columnList.size()-1)){
                                         outStr += ",";
                                     }
                                     if(jRow == 0){
+                                    	if(column.getName().contains(",")){
+                                    		header += "\"" + column.getName() + "\"";
+                                    	}else{
                                         header += column.getName();
+                                    	}
+                                        //header += column.getName();
                                         if(lCol< (columnList.size()-1)){
                                             header += ",";
                                         }else{

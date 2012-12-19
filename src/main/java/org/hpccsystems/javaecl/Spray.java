@@ -24,7 +24,16 @@ public class Spray implements EclCommand {
     private String allowOverWrite = "true";
    
     
+    private String groupName = "";
     
+
+    public String getGroupName() {
+		return groupName;
+	}
+
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
 
     public String getAllowOverWrite() {
 		return allowOverWrite;
@@ -121,27 +130,42 @@ public class Spray implements EclCommand {
         if (fileType != null) {
             if (fileType.equalsIgnoreCase("variable")) {
                 outputField.append("std.file.sprayVariable('");
-                outputField.append(ipAddress).append("',");
-                outputField.append("'").append(filePath).append("',");
-                outputField.append("8192").append(",,,,'").append(clusterName).append("',");
-                outputField.append("'").append(logicalFileName).append("',-1,");
-                outputField.append("'http://").append(ipAddress).append(":").append(serverPort).append("/FileSpray'").append(",,").append(allowOverWrite).append(");");
+                outputField.append(this.ipAddress).append("',");//sourceIP
+                outputField.append("'").append(this.filePath).append("',");//sourcepath
+                outputField.append(",");//maxrecordsize
+                outputField.append("'").append(this.csvSeparator).append("',");//srcCSVseparator
+                outputField.append("'").append(this.csvTerminator).append("',");//srcCSVterminator
+                outputField.append("'").append(this.csvQuote).append("',");//srcCSVquote
+                outputField.append("'").append(this.groupName).append("',");//destinationgroup
+                outputField.append("'").append(this.logicalFileName).append("',");//destinationlogicalname
+                outputField.append("-1,");//[timeout]
+                outputField.append("'http://").append(this.ipAddress).append(":").append(this.serverPort).append("/FileSpray'").append(",");//espserverIPport
+                outputField.append(",");//maxConnections
+                outputField.append(this.allowOverWrite).append(");");//allowoverwrite
+                
+        	}else if (fileType.equalsIgnoreCase("xml")) {
+        		//todo: need to be developed
             } else {
-                //todo: Need to be developed
+                //todo: Need to be fully tested
                 
                 outputField.append("STD.File.SprayFixed('");
-                outputField.append(ipAddress).append("',");
-                outputField.append("'").append(filePath).append("',");
-                outputField.append(this.recordSize).append(",");
-                outputField.append("group").append(",");
-                
-                outputField.append("'").append(logicalFileName).append("',-1,");
-                outputField.append("'http://").append(ipAddress).append(":").append(serverPort).append("/FileSpray'").append(",,").append(allowOverWrite).append(");");
+                outputField.append(this.ipAddress).append("',");//sourceIP
+                outputField.append("'").append(this.filePath).append("',");//sourcepath
+                outputField.append(this.recordSize).append(",");//recordsize
+                outputField.append("'").append(this.groupName).append("'").append(",");//destinationgroup
+                outputField.append("'").append(this.logicalFileName).append("',");//destinationlogicalname
+                outputField.append("-1,");//timeout
+                outputField.append("'http://").append(this.ipAddress).append(":").append(this.serverPort).append("/FileSpray'").append(",");//espserverIPport
+                outputField.append(",");//maxConnections
+                outputField.append(this.allowOverWrite);//allowoverwrite
+                outputField.append(");");
                 
             }
+                
         } else {
             throw new RuntimeException("Uninitialized File Type");
         }
+        //System.out.println(outputField.toString());
         return outputField.toString();
 
     }
