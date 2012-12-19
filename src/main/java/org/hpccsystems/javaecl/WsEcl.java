@@ -61,54 +61,6 @@ public class WsEcl {
         }
     }
 
-    public static ArrayList parse(InputStream xml) throws Exception {
-        ArrayList results = null;
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-
-        Document dom = db.parse(xml);
-
-        Element docElement = dom.getDocumentElement();
-
-        NodeList dsList = docElement.getElementsByTagName("Dataset");
-        if (dsList != null && dsList.getLength() > 0) {
-
-            ArrayList dsArray = new ArrayList();
-
-            results = dsArray;
-
-            for (int i = 0; i < dsList.getLength(); i++) {
-                Element ds = (Element) dsList.item(i);
-                NodeList rowList = ds.getElementsByTagName("Row");
-
-                if (rowList != null && rowList.getLength() > 0) {
-
-                    ArrayList rowArray = new ArrayList();
-
-                    dsArray.add(rowArray);
-
-                    for (int j = 0; j < rowList.getLength(); j++) {
-                        Element row = (Element) rowList.item(j);
-                        
-                        NodeList columnList = row.getChildNodes();
-                        
-                        ArrayList columnsArray = new ArrayList();
-                        rowArray.add(columnsArray);
-                        
-                        for (int k = 0; k < columnList.getLength(); k++) {
-                           columnsArray.add(new Column(columnList.item(k).getNodeName(), columnList.item(k).getTextContent()));
-                        }
-                    }
-                }
-
-            }
-        }
-        
-        return results;
-    }
-    
-    
      public String convertInputStreamToString(InputStream ists) throws IOException {
        
         if (ists != null) {
