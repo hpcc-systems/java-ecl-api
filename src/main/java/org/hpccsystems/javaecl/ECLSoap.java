@@ -6,6 +6,26 @@ package org.hpccsystems.javaecl;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.util.ArrayList;
 import javax.xml.parsers.DocumentBuilder;
@@ -31,7 +51,7 @@ import java.util.regex.Matcher;
  */
 public class ECLSoap {
     
-    private String hostname = "192.168.80.130";
+    private String hostname = "192.168.80.132";
     private int port = 8010;
     
     private String mlPath = "";
@@ -52,7 +72,19 @@ public class ECLSoap {
     private String user = "";
     private String pass = "";
     
+    private String SALTPath = "";
+    private boolean includeSALT = false;
+    private String saltLib = "";
 
+
+    
+    public String getSaltLib() {
+		return saltLib;
+	}
+
+	public void setSaltLib(String saltLib) {
+		this.saltLib = saltLib;
+	}
 
     public String getUser() {
 		return user;
@@ -167,6 +199,25 @@ public class ECLSoap {
     }
     //end getters and setters
     
+   
+    public String getSALTPath() {
+		return SALTPath;
+	}
+
+	public void setSALTPath(String sALTPath) {
+		SALTPath = sALTPath;
+	}
+
+	public boolean isIncludeSALT() {
+		return includeSALT;
+	}
+
+	public void setIncludeSALT(boolean includeSALT) {
+		this.includeSALT = includeSALT;
+	}
+	 //end getters and setters
+	
+	
     public ECLSoap() {
         this.tempDir = System.getProperty("java.io.tmpdir");
         //System.out.println("OS Temp Dir is: " + tempDir);
@@ -200,10 +251,21 @@ public class ECLSoap {
             if(this.includeML){
                 include = " -I \"" + this.mlPath +"\"";
             }
-            String logFile = "--logfile \"" + this.tempDir + this.outputName + "_syntax_log.log\" ";
+            
+            if(this.includeSALT){
+                include += " -I \"" + this.SALTPath +"\"";
+            }
+            
+            if(this.saltLib != null && !this.saltLib.equals("")){
+                include += " -I \"" + this.saltLib +"\"";
+            }
+            
+            String logFile = "--logfile \"" + this.tempDir + this.outputName.replace(' ', '_') + "_syntax_log.log\" ";
            // System.out.println("LogFIle: " + this.tempDir + this.outputName + "_syntax_log.log");
             String c = "\"" + eclccInstallDir + "eclcc.exe\" ";
-            //c += "-legacy ";
+            if(this.includeSALT){
+            	c += "-legacy ";
+            }
             c += logFile + "-c -syntax" + include + " " + inFilePath;
 
 
@@ -537,7 +599,8 @@ public class ECLSoap {
                 "</soap:Body>"+
                 "</soap:Envelope>";
         
-        String path = "/WsWorkunits/WUInfo";
+        //String path = "/WsWorkunits/WUInfo";
+        String path = "/WsWorkunits/WUResult?ver_=1.38";
         InputStream is = this.doSoap(xml, path);
         return is;
     }
@@ -647,7 +710,7 @@ public class ECLSoap {
      * @accepts String
      * @returns InputStream
      * 
-     * Calls the Thor clustor to get Info, not currently utilized
+     * Calls the Thor clustor to get Info
      */
     public InputStream InfoDetailsCall(String wuid){
         String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -1091,9 +1154,22 @@ public class ECLSoap {
             }else{
             	//System.out.println("NO ML LIBRARY INCLUDED!");
             }
+            
+          //System.out.println("_________________________ECLCC_______________________________");
+            if(this.includeSALT){
+                include = " -I \"" + this.SALTPath +"\"";
+            }
+            
+            if(this.saltLib != null && !this.saltLib.equals("")){
+                include += " -I \"" + this.saltLib +"\"";
+            }
+            
+            
             String logFile = "--logfile " + this.tempDir + this.outputName + "_log.log ";
             String c = "\"" + eclccInstallDir + "eclcc.exe\" ";
-            //c += "-legacy ";
+            if(this.includeSALT){
+            	c += "-legacy ";
+            }
             c += logFile + "-E -v" + include + " -o " + outFilePath + " " + inFilePath;
             
            // System.out.println("_________________________ECLCC_______________________________");
