@@ -236,7 +236,9 @@ public class EclDirect {
     
     public ArrayList execute(String eclCode){
 
-        ECLSoap es = getECLSoap();
+       // System.out.println("ECLDirect Execute: User: " + userName + " " + password);
+    	ECLSoap es = getECLSoap();
+        
         
         Boolean proceed = es.executeECL(eclCode);
         this.wuid = es.getWuid();
@@ -531,7 +533,8 @@ public class EclDirect {
                                     Column column = (Column) columnList.get(lCol);
                                     String val = column.getValue().replace("\\", "\\\\");
                                     val = val.replace("\"", "\\\"");
-                                    if(val.contains(",")){
+                                    
+                                    if(val.contains(",") || val.contains("\"")){
                                     	outStr += "\"" + val + "\"";
                                     }else{
                                     	outStr += val;

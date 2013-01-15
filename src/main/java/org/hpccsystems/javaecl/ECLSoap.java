@@ -1073,11 +1073,15 @@ public class ECLSoap {
        try {
 
 
-
-              Authenticator.setDefault(new ECLAuthenticator(user,pass));
+    	   	//System.out.println("ECLSoap doSoap -- User:"+user+ " " + "Pass:" + pass);
+            
+    	   	ECLAuthenticator eclauth = new ECLAuthenticator(user,pass);
+    	   	
+    	   	
+    	   	Authenticator.setDefault(eclauth);
              
           
-            String encoding = new sun.misc.BASE64Encoder().encode ((user+":"+pass).getBytes());
+            //String encoding = new sun.misc.BASE64Encoder().encode ((user+":"+pass).getBytes());
             String host = "http://"+hostname+":"+port+path;
             //System.out.println("HOST: " + host);
             URL url = new URL(host);
@@ -1086,7 +1090,7 @@ public class ECLSoap {
              // Send data
             URLConnection conn = url.openConnection();
             conn.setDoOutput(true);
-            conn.setRequestProperty("Authorization","Basic "+encoding);
+            //conn.setRequestProperty("Authorization","Basic "+encoding);
             conn.setRequestProperty("Post", path + " HTTP/1.0");
             conn.setRequestProperty("Host", hostname);
             conn.setRequestProperty("Content-Length", ""+xmldata.length() );
@@ -1282,7 +1286,7 @@ public class ECLSoap {
         public PasswordAuthentication getPasswordAuthentication() {
             // I haven't checked getRequestingScheme() here, since for NTLM
             // and Negotiate, the usrname and password are all the same.
-            System.err.println("Feeding username and password for " + getRequestingScheme());
+            System.err.println("Feeding username and password for " + getRequestingScheme() + " " + user + ":" + pass +"@"+hostname);
             PasswordAuthentication p = new PasswordAuthentication(user, pass.toCharArray());
            // System.out.println("_________Hostname_______"+hostname);
             return p;
