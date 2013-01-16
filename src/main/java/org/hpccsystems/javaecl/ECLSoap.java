@@ -123,7 +123,7 @@ public class ECLSoap {
     }
 
     public void setOutputName(String outputName) {
-        this.outputName = outputName;
+        this.outputName = outputName.replaceAll("[^A-Za-z0-9]", "");
     }
 
     
@@ -225,7 +225,7 @@ public class ECLSoap {
     public String syntaxCheck(String ecl){
         String res = "";
         int test = 0;
-        String inFile = this.outputName + "-check-spoon-eclCode.ecl";
+        String inFile = this.outputName + "CheckSpoonEclCode.ecl";
 
          //write ecl to file
         
@@ -1124,8 +1124,8 @@ public class ECLSoap {
      * 
      */
     private String compileECL(String ecl){
-        String inFile =  this.outputName + "-spoon-eclCode.ecl";
-        String outFile = this.outputName + "-spoon-eclOut.ecl";
+        String inFile =  this.outputName + "SpoonEclCode.ecl";
+        String outFile = this.outputName + "SpoonEclOut.ecl";
        
          //write ecl to file
         
