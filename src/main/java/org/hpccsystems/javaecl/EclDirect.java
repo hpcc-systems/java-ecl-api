@@ -41,6 +41,7 @@ public class EclDirect {
     private String serverHost;
     private String serverPort;
     private String jobName;
+    private String maxReturn;
     private String eclccInstallDir;
     private String includeML = "false";
     private String mlPath;
@@ -214,7 +215,15 @@ public class EclDirect {
 
     
 
-    public EclDirect(String clusterAddress, String clusterName, String clusterPort) {
+    public String getMaxReturn() {
+		return maxReturn;
+	}
+
+	public void setMaxReturn(String maxReturn) {
+		this.maxReturn = maxReturn;
+	}
+
+	public EclDirect(String clusterAddress, String clusterName, String clusterPort) {
       if(clusterPort.equals("")){
           //if direct
           //clusterPort = "8008";
@@ -363,6 +372,7 @@ public class EclDirect {
         es.setEclccInstallDir(eclccInstallDir);
         es.setHostname(serverHost);
         es.setJobName(jobName);
+        es.setMaxReturn(maxReturn);
         es.setMlPath(mlPath); 
         es.setOutputName(outputName);
         es.setPort(Integer.parseInt(this.serverPort));

@@ -51,13 +51,15 @@ import java.util.regex.Matcher;
  */
 public class ECLSoap {
     
-    private String hostname = "192.168.80.132";
+    private String hostname = "";
     private int port = 8010;
     
     private String mlPath = "";
-    private String eclccInstallDir = "C:\\Program Files\\HPCC Systems\\HPCC\\bin\\ver_3_6\\";
-    private String jobName = "Spoon-job";
-    private String cluster = "hthor";
+    //C:\\Program Files\\HPCC Systems\\HPCC\\bin\\ver_3_6\\
+    private String eclccInstallDir = "";
+    private String jobName = "";
+    private String maxReturn = "";
+    private String cluster = "";
     private boolean includeML = false;
     
     private String outputName = "";
@@ -78,7 +80,15 @@ public class ECLSoap {
 
 
     
-    public String getSaltLib() {
+    public String getMaxReturn() {
+		return maxReturn;
+	}
+
+	public void setMaxReturn(String maxReturn) {
+		this.maxReturn = maxReturn;
+	}
+
+	public String getSaltLib() {
 		return saltLib;
 	}
 
@@ -594,7 +604,7 @@ public class ECLSoap {
                 "<LogicalName></LogicalName>"+
                 "<Cluster></Cluster>"+
                 "<Start></Start>"+
-                "<Count></Count>"+
+                "<Count>"+maxReturn+"</Count>"+
                 "</WUResult>"+
                 "</soap:Body>"+
                 "</soap:Envelope>";
