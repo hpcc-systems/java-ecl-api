@@ -8,7 +8,7 @@ package org.hpccsystems.javaecl;
  *
  * @author ChalaAX
  */
-public class SaltDataProfiling implements EclCommand {
+public class SaltDataProfilingAPI implements EclCommand {
 
     private String name;
     private String datasetName;
@@ -47,7 +47,8 @@ public class SaltDataProfiling implements EclCommand {
 	}
 
 	public void setSaltLib(String saltLib) {
-		this.saltLib = saltLib;
+		//this.saltLib = saltLib;
+		this.saltLib = saltLib.replaceAll("[^A-Za-z0-9]", "");
 	}
 
 	@Override
@@ -56,7 +57,7 @@ public class SaltDataProfiling implements EclCommand {
 		String unique = this.name.replaceAll("[^A-Za-z0-9]", "");//String unique = this.name.replace(" ", "_");
         String ecl = "h_" + unique + " := " + saltLib + ".Hygiene(" + this.datasetName + ");\r\n";
         ecl += "p_" + unique + " := h_" + unique + ".AllProfiles;\r\n";
-       
+        ecl += "//output data\r\n";
         ecl += "OUTPUT(h_" + unique + ".Summary('SummaryReport'), NAMED('Dataprofiling_SummaryReport'), ALL);\r\n";
         ecl += "OUTPUT(SALT25.MAC_Character_Counts.EclRecord(p_" + unique + ", '" + this.layout + "'),NAMED('Dataprofiling_OptimizedLayout'));\r\n";
         ecl += "OUTPUT(p_" + unique + ", NAMED('Dataprofiling_AllProfiles'), ALL);\r\n";

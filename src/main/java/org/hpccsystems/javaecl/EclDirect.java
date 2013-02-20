@@ -544,7 +544,7 @@ public class EclDirect {
                                     String val = column.getValue().replace("\\", "\\\\");
                                     val = val.replace("\"", "\\\"");
                                     
-                                    if(val.contains(",") || val.contains("\"")){
+                                    if(val.contains(",") || val.contains("\"") || val.contains("\r\n") || val.contains("\n")){
                                     	outStr += "\"" + val + "\"";
                                     }else{
                                     	outStr += val;
