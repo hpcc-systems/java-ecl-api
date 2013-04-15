@@ -20,6 +20,9 @@ public class Dataset implements EclCommand {
     
     private String recstruct;
     private String recordSet;
+    
+    private String recordDef = "";
+    private String datasetDef = "";
 
     public String getRecordSet() {
         return recordSet;
@@ -89,11 +92,26 @@ public class Dataset implements EclCommand {
     
     
     
-    @Override
+    public String getRecordDef() {
+		return recordDef;
+	}
+
+	public void setRecordDef(String recordDef) {
+		this.recordDef = recordDef;
+	}
+
+	public String getDatasetDef() {
+		return datasetDef;
+	}
+
+	public void setDatasetDef(String datasetDef) {
+		this.datasetDef = datasetDef;
+	}
+
+	@Override
     public String ecl() {
         String recordFmt = "";
-        String recordDef = "";
-        String datasetDef = "";
+        
         if (recordFormatString != null && recordFormatString.length() > 0)  {
             recordFmt = recordFormatString;
         } else if (recordFormatList != null && recordFormatList.size() > 0) {

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -13,7 +14,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
 
 public class FileInfoSoap {
 	ECLSoap soap;
@@ -43,7 +47,7 @@ public class FileInfoSoap {
 						"<FileSizeTo></FileSizeTo>" +
 						"<FirstN></FirstN>" +
 						"<FirstNType></FirstNType>" +
-						"<PageSize></PageSize>" +
+						"<PageSize>1000000000000</PageSize>" +
 						"<PageStartFrom></PageStartFrom>" +
 						"<Sortby></Sortby>" +
 						"<Descending></Descending>" +
@@ -128,9 +132,116 @@ public class FileInfoSoap {
 		return new String[0];
 	}
 	
-	
-	
 	public ArrayList<String[]> fetchFileMeta(String fileName){
+		String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+				"		<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
+				"		<soap:Body>" +
+				"			<DFUDefFile xmlns=\"urn:hpccsystems:ws:wsdfu\">" +
+				"				<Name>" + fileName + "</Name>" +
+				"				<Format>xml</Format>" +
+				"			</DFUDefFile>" +
+				"		</soap:Body>" +
+				"</soap:Envelope>";
+		soap = new ECLSoap();
+		
+		soap.setHostname(serverHost);
+		soap.setPort(this.serverPort);
+		
+		String path = "/WsDfu/DFUDefFile?ver_=1.2";
+		
+		InputStream is = soap.doSoap(xml, path);
+				
+		try{
+			return processFileMeta(is);
+		}catch(Exception e){
+			System.out.println(e);
+		}
+		return null;
+	}
+	public ArrayList<String[]> processFileMeta(InputStream is) throws Exception{
+		ArrayList<String[]> results = new ArrayList<String[]>();
+		String xml = "";
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        
+        Document dom = db.parse(is);
+
+        Element docElement = dom.getDocumentElement();
+
+        NodeList dfuResponse = docElement.getElementsByTagName("DFUDefFileResponse");
+        //DFUDefFileResponse
+        //	defFile
+        //  decode base64
+        
+        if (dfuResponse != null && dfuResponse.getLength() > 0) {
+        	
+           //ArrayList dsArray = new ArrayList();
+
+           //results = dsArray;
+
+            for (int i = 0; i < dfuResponse.getLength(); i++) {
+            	//System.out.println("Node:" + dsList.item(i).getNodeName());
+                Element ds = (Element) dfuResponse.item(i);
+                //System.out.println(ds.getFirstChild().getNodeName());
+                NodeList rowList = ds.getElementsByTagName("defFile");
+                //System.out.println("Node:" + rowList.getLength());
+                if (rowList != null && rowList.getLength() > 0) {
+
+                    for (int j = 0; j < rowList.getLength(); j++) {
+                        Element row = (Element) rowList.item(j);
+                        String data = row.getTextContent();
+                        byte[] decoded = javax.xml.bind.DatatypeConverter.parseBase64Binary(data);
+                        xml =  new String(decoded);   
+                    }
+                }
+
+            }
+        }
+        System.out.println("XML: " + xml);
+        results = parseRecordXML(xml);
+       // Iterator iterator = results.iterator();
+        return results;
+	}
+	
+	public ArrayList<String[]> parseRecordXML(String xml) throws Exception{
+		ArrayList<String[]> results = new ArrayList<String[]>();
+		 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+	        DocumentBuilder db = dbf.newDocumentBuilder();
+	        InputSource is = new InputSource(new StringReader(xml));
+	        Document dom = db.parse(is);
+	        
+	        Element docElement = dom.getDocumentElement();
+	        //System.out.println(docElement.getTextContent());
+	        NodeList fields = docElement.getElementsByTagName("Field");
+	       //System.out.println(fields.getLength());
+	       if (fields != null && fields.getLength() > 0) {
+	    	   
+	    	   for (int i = 0; i < fields.getLength(); i++) {
+	    		   NamedNodeMap attributes = fields.item(i).getAttributes();
+	    		   String[] column = new String[5];
+	               	column[0] = "";//label
+	               	column[1] = "";//type
+	               	column[2] = "";//value
+	               	column[3] = "";//size
+	               	column[4] = "";//maxsize
+	    		   //<Field ecltype="decimal8_2" label="shelf_depth" name="shelf_depth" position="14" rawtype="327683" size="5" type="decimal8_"/>
+	    		  
+	    		   column[0] = attributes.getNamedItem("label").getTextContent();
+	    		   column[1] = attributes.getNamedItem("ecltype").getTextContent();
+	    		   column[2] = "";
+	    		   column[3] = attributes.getNamedItem("size").getTextContent();
+	    		   column[4] = attributes.getNamedItem("size").getTextContent();
+	    		   
+	    		   
+	    		   
+	    		   
+               		results.add(column);
+	    	   }
+	       }
+	       return results;
+	}
+	
+	public ArrayList<String[]> fetchFileMeta_old(String fileName){
 	 	String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
 	 			"<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
 	 			"<soap:Body>" +
@@ -174,14 +285,14 @@ public class FileInfoSoap {
 		}
 		*/
 		try{
-			return processFileMeta(is);
+			return processFileMeta_old(is);
 		}catch(Exception e){
 			System.out.println(e);
 		}
 		return null;
 	}
 	
-	public ArrayList<String[]> processFileMeta(InputStream is) throws Exception{
+	public ArrayList<String[]> processFileMeta_old(InputStream is) throws Exception{
 		ArrayList<String[]> results = new ArrayList<String[]>();
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -296,24 +407,45 @@ public class FileInfoSoap {
 
 	
 	public static void main(String[] args){
-		FileInfoSoap c = new FileInfoSoap("192.168.80.132", 8010);
+		FileInfoSoap c = new FileInfoSoap("10.239.227.6", 8010);
 		/*String[] test = c.fetchFiles();
 		System.out.println("You have " + test.length + " Files");
 		for (int i = 0; i<test.length; i++){
 			System.out.println(test[i]);
 		}*/
 		
-		ArrayList<String[]> s = c.fetchFileMeta("~thor::foodmart::productsoutput");
+		ArrayList<String[]> s = c.fetchFileMeta("~saltdemo::sampleusersguideinputdata");
+		ArrayList<String[]> s2 = c.fetchFileMeta("~thor::jc::test::product");
 		//ArrayList<String[]> s = c.fetchFileMeta("~in::aircraft_reference");
 		
-		if(s.size()==1){
+		if(s!= null && s.size()==1){
 			if(s.get(0)[0].equals("line")){
 				//nor rec
 				s = new ArrayList<String[]>();
 			}
 		}
-		for(int i = 0; i<s.size(); i++){
-			System.out.println(s.get(i)[0]);
+		if(s!= null){
+			for(int i = 0; i<s.size(); i++){
+				System.out.println(s.get(i).length);
+				System.out.println("Type: " + s.get(i)[1]);
+				System.out.println("Label: " + s.get(i)[0]);
+				System.out.println("Default Value: " + s.get(i)[2]);
+			}
+		}
+		
+		
+		if(s2!= null && s2.size()==1){
+			if(s2.get(0)[0].equals("line")){
+				//nor rec
+				s2 = new ArrayList<String[]>();
+			}
+		}
+		if(s2!= null){
+			for(int i = 0; i<s2.size(); i++){
+				System.out.println("Type: " + s2.get(i)[1]);
+				System.out.println("Label: " + s2.get(i)[0]);
+				System.out.println("Default Value: " + s2.get(i)[2]);
+			}
 		}
 		
 	}

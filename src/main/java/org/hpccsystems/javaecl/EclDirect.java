@@ -60,7 +60,7 @@ public class EclDirect {
     private ArrayList<String[]> files = new ArrayList();
     private String resName = "";
 
-    
+    private ArrayList<String> resultNames = new ArrayList();
     
     public String getUserName() {
 		return userName;
@@ -222,6 +222,17 @@ public class EclDirect {
 	public void setMaxReturn(String maxReturn) {
 		this.maxReturn = maxReturn;
 	}
+
+	
+	public ArrayList<String> getResultNames() {
+		return resultNames;
+	}
+
+	public void setResultNames(ArrayList<String> resultNames) {
+		this.resultNames = resultNames;
+	}
+
+
 
 	public EclDirect(String clusterAddress, String clusterName, String clusterPort) {
       if(clusterPort.equals("")){
@@ -508,6 +519,7 @@ public class EclDirect {
                              
                              String[] fileInfo = {resName, outputDir, outputDir + "\\" + resName + ".csv"};
                              files.add(fileInfo);
+                             resultNames.add(resName);
                              counter++;
                          }
                      }

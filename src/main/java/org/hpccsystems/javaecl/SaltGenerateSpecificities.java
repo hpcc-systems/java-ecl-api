@@ -8,16 +8,16 @@ package org.hpccsystems.javaecl;
  *
  * @author ChalaAX
  */
-public class SaltDataProfilingAPI implements EclCommand {
+public class SaltGenerateSpecificities implements EclCommand {
 
     private String name;
     private String datasetName;
-    private String layout;
-    private String saltLib;
     private String recordName;
+    //private String layout;
+    private String saltLib;
+    
 
-
-    public String getName() {
+	public String getName() {
 		return name;
 	}
 
@@ -33,23 +33,12 @@ public class SaltDataProfilingAPI implements EclCommand {
 		this.datasetName = datasetName;
 	}
 
-	public String getLayout() {
-		return layout;
-	}
-
-	public void setLayout(String layout) {
-		this.layout = layout;
-	}
-	
-	
-
 	public String getSaltLib() {
 		return saltLib;
 	}
 
 	public void setSaltLib(String saltLib) {
-		//this.saltLib = saltLib;
-		this.saltLib = saltLib.replaceAll("[^A-Za-z0-9]", "");
+		this.saltLib = saltLib;
 	}
 	
 	
@@ -65,14 +54,14 @@ public class SaltDataProfilingAPI implements EclCommand {
 	@Override
     public String ecl() {
 		//String regex = "[ ]";
-		String ecl = "";
-		String unique = this.name.replaceAll("[^A-Za-z0-9]", "");//String unique = this.name.replace(" ", "_");
-		String inDataset = this.datasetName;
+    	String unique = this.name.replaceAll("[^A-Za-z0-9]", "");//this.name.replace(" ", "_");
+    	String ecl = "";
+    	String inDataset = this.datasetName;
 		inDataset = "in_" + this.datasetName;
 		
 		String idFix = "";
 		
-		idFix += this.saltLib + ".layout_" + this.layout + " SpoonTransform(" + this.datasetName +" L) := TRANSFORM\r\n";
+		idFix += this.saltLib + ".layout_" + this.recordName + " SpoonTransform(" + this.datasetName +" L) := TRANSFORM\r\n";
 		idFix += " SELF.spoonClusterID := 0;\r\n";
 		idFix += " SELF.spoonRecordID := 0;\r\n";
 		idFix += " SELF := L;\r\n";
@@ -80,7 +69,7 @@ public class SaltDataProfilingAPI implements EclCommand {
 		idFix += inDataset + " := project(" + this.datasetName + ",SpoonTransform(LEFT));\r\n\r\n";
 		
 		
-		idFix += this.saltLib + ".layout_" + this.layout + " AddIds("+ inDataset +" L,"+ inDataset +" R) := TRANSFORM\r\n";
+		idFix += this.saltLib + ".layout_" + this.recordName + " AddIds("+ inDataset +" L,"+ inDataset +" R) := TRANSFORM\r\n";
 		idFix += " SELF.spoonClusterID := L.spoonRecordID + 1;\r\n";
 		idFix += " SELF.spoonRecordID := L.spoonRecordID + 1;\r\n";
 		idFix += " SELF := R;\r\n";
@@ -88,16 +77,11 @@ public class SaltDataProfilingAPI implements EclCommand {
 		idFix += "out_" + this.datasetName + " := ITERATE("+inDataset+",AddIds(LEFT,RIGHT));\r\n\r\n";
 		
 		ecl += idFix;
-		inDataset = "out_" + this.datasetName;
-		
-        ecl += "h_" + unique + " := " + saltLib + ".Hygiene(" + inDataset+ ");\r\n";
-        ecl += "p_" + unique + " := h_" + unique + ".AllProfiles;\r\n";
-        ecl += "//output data\r\n";
-        ecl += "OUTPUT(h_" + unique + ".Summary('SummaryReport'), NAMED('Dataprofiling_SummaryReport'), ALL);\r\n";
-        ecl += "OUTPUT(SALT25.MAC_Character_Counts.EclRecord(p_" + unique + ", '" + this.layout + "'),NAMED('Dataprofiling_OptimizedLayout'));\r\n";
-        ecl += "OUTPUT(p_" + unique + ", NAMED('Dataprofiling_AllProfiles'), ALL);\r\n";
-        
-       
+    	
+    	ecl += "OUTPUT(" + saltLib + ".specificities(out_" + this.datasetName + ").Specificities,Named('Specificities'));\r\n";
+    	ecl += "OUTPUT(" + saltLib + ".specificities(out_" + this.datasetName + ").SpcShift,Named('SpcShift'));\r\n";
+    	//because of OSS compatability can't autogen the specificities here must fetch the output and do it our self
+    	
         return ecl;
     }
 

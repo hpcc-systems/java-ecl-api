@@ -32,7 +32,7 @@ public class HPCCServerInfo {
 	public ArrayList<String[]> fetchFileDetails(String fileName){
 		FileInfoSoap c = new FileInfoSoap(serverHost,serverPort);
 		ArrayList<String[]> file = c.fetchFileMeta(fileName);
-		if(file.size()==1){
+		if(file != null && file.size()==1){
 			if(file.get(0)[0].equals("line")){
 				//nor rec
 				file = new ArrayList<String[]>();

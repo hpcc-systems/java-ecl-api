@@ -1186,8 +1186,8 @@ public class ECLSoap {
             }
             c += logFile + "-E -v" + include + " -o " + outFilePath + " " + inFilePath;
             
-           // System.out.println("_________________________ECLCC_______________________________");
-           // System.out.println(c);
+           System.out.println("_________________________ECLCC_______________________________");
+            System.out.println(c);
             ProcessBuilder pb = new ProcessBuilder(c);
             pb.redirectErrorStream(true); // merge stdout, stderr of process
 
