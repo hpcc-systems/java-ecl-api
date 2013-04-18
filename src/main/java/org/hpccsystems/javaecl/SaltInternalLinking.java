@@ -38,7 +38,7 @@ public class SaltInternalLinking implements EclCommand {
 	}
 
 	public void setSaltLib(String saltLib) {
-		this.saltLib = saltLib;
+		this.saltLib = saltLib.replaceAll("[^A-Za-z0-9]", "");
 	}
 
 	
