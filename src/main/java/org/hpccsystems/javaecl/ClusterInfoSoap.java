@@ -17,10 +17,14 @@ public class ClusterInfoSoap {
 	
 	private String serverHost;
     private int serverPort;
+    private String user;
+    private String pass;
 
-	public ClusterInfoSoap(String serverHost,int serverPort){
+	public ClusterInfoSoap(String serverHost,int serverPort,String user, String pass){
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
+		this.user=user;
+		this.pass=pass;
 	}
 	
 	public String buildSoapEnv (String clusterType){
@@ -107,6 +111,8 @@ public class ClusterInfoSoap {
 		soap = new ECLSoap();
 		soap.setHostname(serverHost);
 		soap.setPort(this.serverPort);
+		soap.setUser(user);
+		soap.setPass(pass);
 		
 		String path = "/WsTopology/TpClusterQuery";
         InputStream is = soap.doSoap(buildSoapEnv(clusterType), path);
@@ -117,14 +123,15 @@ public class ClusterInfoSoap {
 		    return c.toArray(clusters);
 		}catch (Exception e){
 			System.out.println("error");
-			System.out.println(e);
+			//System.out.println(e);
+			e.printStackTrace();
 		}
 		return null;
 	}
 	
 	
 	public static void main(String[] args){
-		ClusterInfoSoap c = new ClusterInfoSoap("192.168.80.132", 8010);
+		ClusterInfoSoap c = new ClusterInfoSoap("192.168.80.132", 8010,"","");
 		String[] test = c.fetchClusters("");
 		System.out.println("You have " + test.length + " Clusters");
 		for (int i = 0; i<test.length; i++){

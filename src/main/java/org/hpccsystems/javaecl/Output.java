@@ -225,7 +225,7 @@ public class Output implements EclCommand {
             ecl += "OUTPUT( " + this.expression;
             
             if(this.named != null && !this.named.equals("")){
-                ecl += ", NAMED(" + named + ")"; 
+                ecl += ", NAMED('" + named + "')"; 
             }
             ecl += ");";
         }else if (this.inputType.equals("Recordset")){
@@ -233,7 +233,7 @@ public class Output implements EclCommand {
             ecl += "OUTPUT( " + this.recordset;
             if(this.thor.equals("No")){
                 if(!this.outputFormat.equals("")){
-                    ecl += "," + this.outputFormat;
+                    ecl += ",{" + this.outputFormat + "}";
                 }
                 if(this.outputType.equals("File")){
                     if(this.outputFormat.equals("")){
@@ -358,7 +358,7 @@ public class Output implements EclCommand {
                     //[attr := ] OUTPUT(recordset [, format ] ,NAMED( name ) [,EXTEND] [,ALL])
                     
                    
-                    ecl += ",NAMED(" + this.named + ")";
+                    ecl += ",NAMED('" + this.named + "')";
                     
                     if(this.extend.equals("Yes")){
                         ecl += ",EXTEND";

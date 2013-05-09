@@ -61,8 +61,17 @@ public class EclDirect {
     private String resName = "";
 
     private ArrayList<String> resultNames = new ArrayList();
+    private ArrayList compileFlagsAL = new ArrayList();
     
-    public String getUserName() {
+    public ArrayList getCompileFlagsAL() {
+		return compileFlagsAL;
+	}
+
+	public void setCompileFlagsAL(ArrayList compileFlagsAL) {
+		this.compileFlagsAL = compileFlagsAL;
+	}
+
+	public String getUserName() {
 		return userName;
 	}
 
@@ -389,6 +398,8 @@ public class EclDirect {
         es.setPort(Integer.parseInt(this.serverPort));
         es.setUser(userName);
         es.setPass(password);
+        //System.out.println("CompileFlagAL Size in eclDirect: " + compileFlagsAL.size());
+        es.setCompileFlagsAL(compileFlagsAL);
         if(this.includeML.equals("true")){
             es.setIncludeML(true);
         }else{
@@ -490,7 +501,7 @@ public class EclDirect {
      
      public boolean writeResultsToFile(String outputDir) throws Exception{
     	 boolean isSuccess = true;
-    	 System.out.println("writing files");
+    	// System.out.println("writing files");
     	 ECLSoap es = getECLSoap();
     	 if(isValid){// && dsList != null){
              ArrayList al = this.resultList();
@@ -515,9 +526,13 @@ public class EclDirect {
                              InputStream is = es.ResultsSoapCall(this.getWuid(), resName);
                              ArrayList results = es.parseResults(is);
                              resName = resName.replace(" ", "_");
-                             createOutputFile(results,outputDir + "\\" + resName + ".csv",counter);
+                             String resFileName = outputDir + resName + ".csv";
+                             if (System.getProperty("os.name").startsWith("Windows")) {
+                            	 resFileName = outputDir + "\\" + resName + ".csv";
+                             }
+                             createOutputFile(results,resFileName,counter);
                              
-                             String[] fileInfo = {resName, outputDir, outputDir + "\\" + resName + ".csv"};
+                             String[] fileInfo = {resName, outputDir, resFileName};
                              files.add(fileInfo);
                              resultNames.add(resName);
                              counter++;

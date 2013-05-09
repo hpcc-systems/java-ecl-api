@@ -24,10 +24,15 @@ public class FileInfoSoap {
 		
 	private String serverHost;
 	private int serverPort;
-	
-	public FileInfoSoap(String serverHost,int serverPort){
+	private String user;
+	private String pass;
+	private boolean fetchLogicalFiles = true;
+	private String numFilesToFetch = "1000";
+	public FileInfoSoap(String serverHost,int serverPort,String user, String pass){
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
+		this.user=user;
+		this.pass=pass;
 	}
 
 	public String buildSoapEnv (String fileName){
@@ -45,9 +50,9 @@ public class FileInfoSoap {
 						"<FileType></FileType>" +
 						"<FileSizeFrom></FileSizeFrom>" +
 						"<FileSizeTo></FileSizeTo>" +
-						"<FirstN></FirstN>" +
+						"<FirstN>" + numFilesToFetch + "</FirstN>" +
 						"<FirstNType></FirstNType>" +
-						"<PageSize>1000000000000</PageSize>" +
+						"<PageSize>" + numFilesToFetch + "</PageSize>" +
 						"<PageStartFrom></PageStartFrom>" +
 						"<Sortby></Sortby>" +
 						"<Descending></Descending>" +
@@ -112,11 +117,15 @@ public class FileInfoSoap {
 	 * @returns String[]
 	 */
 	public String[] fetchFiles(){
-		
+		if(!fetchLogicalFiles){
+			return new String[0];
+		}
 		soap = new ECLSoap();
 		
 		soap.setHostname(serverHost);
 		soap.setPort(this.serverPort);
+		soap.setUser(user);
+		soap.setPass(pass);
 		
 		String path = "/WsDfu/DFUQuery";
         InputStream is = soap.doSoap(buildSoapEnv(""), path);
@@ -146,15 +155,19 @@ public class FileInfoSoap {
 		
 		soap.setHostname(serverHost);
 		soap.setPort(this.serverPort);
+		soap.setUser(user);
+		soap.setPass(pass);
 		
 		String path = "/WsDfu/DFUDefFile?ver_=1.2";
 		
 		InputStream is = soap.doSoap(xml, path);
+	
 				
 		try{
 			return processFileMeta(is);
 		}catch(Exception e){
 			System.out.println(e);
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -167,7 +180,7 @@ public class FileInfoSoap {
         Document dom = db.parse(is);
 
         Element docElement = dom.getDocumentElement();
-
+        System.out.println(dom.getTextContent());
         NodeList dfuResponse = docElement.getElementsByTagName("DFUDefFileResponse");
         //DFUDefFileResponse
         //	defFile
@@ -267,6 +280,8 @@ public class FileInfoSoap {
 		
 		soap.setHostname(serverHost);
 		soap.setPort(this.serverPort);
+		soap.setUser(user);
+		soap.setPass(pass);
 		
 		String path = "/WsDfu/DFUBrowseData?ver_=1.1";
 		
@@ -407,7 +422,7 @@ public class FileInfoSoap {
 
 	
 	public static void main(String[] args){
-		FileInfoSoap c = new FileInfoSoap("10.239.227.6", 8010);
+		FileInfoSoap c = new FileInfoSoap("10.239.227.6", 8010,"","");
 		/*String[] test = c.fetchFiles();
 		System.out.println("You have " + test.length + " Files");
 		for (int i = 0; i<test.length; i++){

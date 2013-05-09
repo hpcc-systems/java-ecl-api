@@ -77,10 +77,18 @@ public class ECLSoap {
     private String SALTPath = "";
     private boolean includeSALT = false;
     private String saltLib = "";
-
+    private ArrayList<String[]> compileFlagsAL = new ArrayList();
 
     
-    public String getMaxReturn() {
+    public ArrayList getCompileFlagsAL() {
+		return compileFlagsAL;
+	}
+
+	public void setCompileFlagsAL(ArrayList compileFlagsAL) {
+		this.compileFlagsAL = compileFlagsAL;
+	}
+
+	public String getMaxReturn() {
 		return maxReturn;
 	}
 
@@ -229,21 +237,21 @@ public class ECLSoap {
 	
 	
     public ECLSoap() {
-        this.tempDir = System.getProperty("java.io.tmpdir");
+    	if (System.getProperty("os.name").startsWith("Windows")) {
+    		this.tempDir = System.getProperty("java.io.tmpdir");
+        } else {
+        	this.tempDir = System.getProperty("java.io.tmpdir") + "/";
+        } 
+
+        
         //System.out.println("OS Temp Dir is: " + tempDir);
     }
     public String syntaxCheck(String ecl){
         String res = "";
         int test = 0;
         String inFile = this.outputName + "CheckSpoonEclCode.ecl";
-
-         //write ecl to file
-        
-        //String inFilePath = "\"" + eclccInstallDir + inFile + "\"";
-        String inFilePath = "\"" + this.tempDir + inFile + "\"";
+        String inFilePath = this.tempDir + inFile;
          try {
-            //System.out.println("Created File (synTaxCheck): " + eclccInstallDir + inFile);
-            //BufferedWriter out = new BufferedWriter(new FileWriter(eclccInstallDir + inFile));
             System.out.println("Created File (synTaxCheck): " + this.tempDir + inFile);
             BufferedWriter out = new BufferedWriter(new FileWriter(this.tempDir + inFile));
             out.write(ecl);
@@ -255,90 +263,87 @@ public class ECLSoap {
         }   
          //System.out.println("check point");
         try{
-            //call eclcc
-            //need to modify -I to include path...
-            String include = "";
+            String logFile = this.tempDir + this.outputName.replace(' ', '_') + "_syntax_log.log";
+            String c = eclccInstallDir;
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                        c += "eclcc.exe";
+            }else{
+                        c += "eclcc";
+            }
+            String paramSalt = "";
+            
+
+            System.out.println("_________________________ECLCC SYNTAX CHECK_______________________________");
+
+            ArrayList<String> paramsAL = new ArrayList<String>();
+            paramsAL.add(c);
+            paramsAL.add("-c");
+            paramsAL.add("-syntax");
+            
+            if(this.includeSALT){
+                paramSalt = "-legacy";
+                paramsAL.add(paramSalt);
+            }
+            paramsAL.add("--logfile");
+            paramsAL.add(logFile);
+            
             if(this.includeML){
-                include = " -I \"" + this.mlPath +"\"";
+            	paramsAL.add("-I");
+            	paramsAL.add(this.mlPath);
             }
-            
             if(this.includeSALT){
-                include += " -I \"" + this.SALTPath +"\"";
+            	paramsAL.add("-I");
+            	paramsAL.add(this.SALTPath);
             }
-            
             if(this.saltLib != null && !this.saltLib.equals("")){
-                include += " -I \"" + this.saltLib +"\"";
+            	paramsAL.add("-I");
+            	paramsAL.add(this.saltLib);
             }
-            
-            String logFile = "--logfile \"" + this.tempDir + this.outputName.replace(' ', '_') + "_syntax_log.log\" ";
-           // System.out.println("LogFIle: " + this.tempDir + this.outputName + "_syntax_log.log");
-            String c = "\"" + eclccInstallDir + "eclcc.exe\" ";
-            if(this.includeSALT){
-            	c += "-legacy ";
+            if(compileFlagsAL != null && compileFlagsAL.size() > 0){
+            	for(int i = 0; i<compileFlagsAL.size(); i++){
+            		if(compileFlagsAL.get(i).length == 2){
+            			if(!compileFlagsAL.get(i)[0].equals("")){
+            				paramsAL.add(compileFlagsAL.get(i)[0]);
+            			}
+            			if(!compileFlagsAL.get(i)[1].equals("")){
+            				paramsAL.add(compileFlagsAL.get(i)[1]);
+            			}
+            		}
+            	}
             }
-            c += logFile + "-c -syntax" + include + " " + inFilePath;
-
-
-            ProcessBuilder pb = new ProcessBuilder(c);
+            paramsAL.add(inFilePath);
+            String [] params = new String[paramsAL.size()];
+            paramsAL.toArray(params);
+            ProcessBuilder pb = new ProcessBuilder(params);
+            System.out.println("----------Syntax Check-----------");
+            System.out.println("---------------------");
+            System.out.println(pb.command().toString());
+           
             pb.redirectErrorStream(true); // merge stdout, stderr of process
-            //System.out.println("Start Process Builder");
+            System.out.println(pb.command().toString());
             File path = new File(eclccInstallDir);
-            //System.out.println("1");
             pb.directory(path);
-           // System.out.println("2");
             Process p = pb.start();
-            //System.out.println("3");
-            
-           // int pStatus = p.waitFor();
-           // System.out.println("4");
-            
-           // System.out.println("InputStream");
             InputStream is = p.getInputStream();
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
             String line;
-            
-           // System.out.println("STATUS: " + pStatus);
             while((line = br.readLine()) != null){
-            	//System.out.println("#####<InputStream> "+line);
-                //res += "<InputStream> " + line+"\r\n";
                 res += cleanError(line)+"\r\n";
             }
-            System.out.println("Finished InputStream");
-            
+             
             InputStream iError = p.getErrorStream();
             InputStreamReader isrError = new InputStreamReader(iError);
             BufferedReader brErr = new BufferedReader(isrError);
             String lineErr;
             while((lineErr = brErr.readLine()) != null){
-                //System.out.println("#####<ErrorStream> "+lineErr);
-                //res += "<ErrorStream> " + lineErr+"\r\n";
+
                 res += cleanError(lineErr)+"\r\n";
             }
-            //System.out.println("Finished ErrorStream");
-                        
-           
             
-            /*
-
-            InputStream is2 = p.getErrorStream();
-            int pStatus2 = p.waitFor();
-            InputStreamReader isr2 = new InputStreamReader(is2);
-            BufferedReader br2 = new BufferedReader(isr2);
-            String line2;
-
-            while((line2 = br2.readLine()) != null){
-                //System.out.println("****"+line2);
-                res += line2 +"\r\n";
-            }
-			*/
-
-
-            //deleteFile(eclccInstallDir+inFile);
-            deleteFile(this.tempDir+inFile);
+            //deleteFile(this.tempDir+inFile);
             
-          //  System.out.println("Finished compile check");
-            
+ 
         }catch (Exception e){
             System.out.println(e.toString());
             e.printStackTrace();
@@ -1137,20 +1142,12 @@ public class ECLSoap {
         String inFile =  this.outputName + "SpoonEclCode.ecl";
         String outFile = this.outputName + "SpoonEclOut.ecl";
        
-         //write ecl to file
         
-        //String inFilePath = "\"" + eclccInstallDir + inFile + "\"";
-        //String outFilePath = "\"" + eclccInstallDir + outFile + "\"";
-        
-        String inFilePath = "\"" + this.tempDir + inFile + "\"";
-        String outFilePath = "\"" + this.tempDir + outFile + "\"";
+        String inFilePath = this.tempDir + inFile;
+        String outFilePath = this.tempDir + outFile;
         
         
         try {
-            //System.out.println("Created File (compileECL): " + eclccInstallDir + inFile);
-            //BufferedWriter out = new BufferedWriter(new FileWriter(eclccInstallDir + inFile));
-            
-            //System.out.println("Created File (compileECL): " + this.tempDir + inFile);
             BufferedWriter out = new BufferedWriter(new FileWriter(this.tempDir + inFile));
             out.write(ecl);
             out.close();
@@ -1160,35 +1157,79 @@ public class ECLSoap {
         }   
         
         try{
-            //call eclcc
-            //need to modify -I to include path...
-            String include = "";
-            if(this.includeML){
-                include = " -I \"" + this.mlPath +"\"";
+
+            
+            String logFile = this.tempDir + this.outputName + "_log.log";
+            
+            String c = eclccInstallDir;
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                c += "eclcc.exe";
             }else{
-            	//System.out.println("NO ML LIBRARY INCLUDED!");
+                c += "eclcc";
             }
+            String paramSalt = "";
+
+           // System.out.println("_________________________ECLCC_______________________________");
             
-          //System.out.println("_________________________ECLCC_______________________________");
+            
+            ArrayList<String> paramsAL = new ArrayList<String>();
+            paramsAL.add(c);
+            paramsAL.add("-E");
+            paramsAL.add("-v");
+            
             if(this.includeSALT){
-                include = " -I \"" + this.SALTPath +"\"";
+                paramSalt += "-legacy";
+                paramsAL.add(paramSalt);
             }
+            paramsAL.add("--logfile");
+            paramsAL.add(logFile);
             
+            if(this.includeML){
+            	paramsAL.add("-I");
+            	paramsAL.add(this.mlPath);
+            }
+            if(this.includeSALT){
+            	paramsAL.add("-I");
+            	paramsAL.add(this.SALTPath);
+            }
             if(this.saltLib != null && !this.saltLib.equals("")){
-                include += " -I \"" + this.saltLib +"\"";
+            	paramsAL.add("-I");
+            	paramsAL.add(this.saltLib);
             }
-            
-            
-            String logFile = "--logfile " + this.tempDir + this.outputName + "_log.log ";
-            String c = "\"" + eclccInstallDir + "eclcc.exe\" ";
-            if(this.includeSALT){
-            	c += "-legacy ";
+            //System.out.println("Check for Custom Flags | ECLSoap ");
+           // System.out.println("compileFlagsAL size eclsoap: " + compileFlagsAL.size());
+            if(compileFlagsAL != null && compileFlagsAL.size() > 0){
+            	//System.out.println(" -- has Custom Flags | parsing for process builder -- ");
+            	for(int i = 0; i<compileFlagsAL.size(); i++){
+            		//System.out.println(" -- loop iteration " + i);
+            		if(compileFlagsAL.get(i).length == 2){
+            			//System.out.println(" -- -- has array of 2");
+            			if(!compileFlagsAL.get(i)[0].equals("")){
+            				//System.out.println(" -- -- -- Key: " + compileFlagsAL.get(i)[0]);
+            				paramsAL.add(compileFlagsAL.get(i)[0]);
+            			}
+            			if(!compileFlagsAL.get(i)[1].equals("")){
+            				//System.out.println(" -- -- -- Val: " + compileFlagsAL.get(i)[1]);
+            				paramsAL.add(compileFlagsAL.get(i)[1]);
+            			}
+            		}
+            	}
             }
-            c += logFile + "-E -v" + include + " -o " + outFilePath + " " + inFilePath;
+            //"-o", outFilePath, inFilePath
+            paramsAL.add("-o");
+            paramsAL.add(outFilePath);
+            paramsAL.add(inFilePath);
+            String [] params = new String[paramsAL.size()];
+            paramsAL.toArray(params);
+            //String[] params = (String[]) paramsAL.toArray();
+            ProcessBuilder pb = new ProcessBuilder(params);
             
-           System.out.println("_________________________ECLCC_______________________________");
-            System.out.println(c);
-            ProcessBuilder pb = new ProcessBuilder(c);
+           // System.out.println("+++++++++++++++++++++");
+           // System.out.println("+++++++++++++++++++++");
+           // System.out.println("+++++++++++++++++++++");
+            System.out.println("++++++++++Compile ECLSOAP+++++++++++");
+            System.out.println("+++++++++++++++++++++");
+            System.out.println(pb.command().toString());
             pb.redirectErrorStream(true); // merge stdout, stderr of process
 
             File path = new File(eclccInstallDir);
@@ -1208,25 +1249,17 @@ public class ECLSoap {
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
             String line;
-            
-
-            //System.out.println(c);
-            
 
             while((line = br.readLine()) != null){
                 //System.out.println(line);
             }
 
             
-            //String compiled_ecl = openFile(eclccInstallDir+outFile);
-            //deleteFile(eclccInstallDir+outFile);
-            //deleteFile(eclccInstallDir+inFile);
+
             String compiled_ecl = openFile(this.tempDir+outFile);
-            deleteFile(this.tempDir+outFile);
-            deleteFile(this.tempDir+inFile);
+            //deleteFile(this.tempDir+outFile);
+            //deleteFile(this.tempDir+inFile);
             
-            //System.out.println("finished compileECL");
-            //load file as string
             return compiled_ecl;
             
         }catch (Exception e){
@@ -1236,6 +1269,99 @@ public class ECLSoap {
         
         return null;
         //return ecl;
+    }
+    
+    public static void main(String[] args){
+    	System.out.println("Test Compile");
+
+    	String eclccInstallDir = "C:\\Program Files\\HPCC Systems\\HPCC\\bin\\ver_3_0\\";
+    	String tempDir = "";
+    	if (System.getProperty("os.name").startsWith("Windows")) {
+    		tempDir = System.getProperty("java.io.tmpdir");
+        } else {
+        	tempDir = System.getProperty("java.io.tmpdir") + "/";
+        } 
+    	String outputName = "Execute";
+   	 	String inFile =  outputName + "SpoonEclCode.ecl";
+   	 	String outFile = outputName + "SpoonEclOut.ecl";
+
+   	 	String inFilePath = tempDir + inFile;
+   	 	String outFilePath = tempDir + outFile;
+     
+   	 	//C:\DOCUME~1\CHAMBE~1.RIS\LOCALS~1\Temp\ExecuteSpoonEclCode.ecl
+    	   try{
+               //call eclcc
+               //need to modify -I to include path...
+               String includeML = "";
+               String includeSalt = "";              
+               String includeSaltLib = "";
+               
+               
+               
+               String logFile = tempDir + outputName + "_log.log";
+             
+             
+               String c = eclccInstallDir;
+               if (System.getProperty("os.name").startsWith("Windows")) {
+                   // use eclcc.exe
+                           c += "eclcc.exe";
+               }else{
+                           c += "eclcc";
+                           //logFile = "";//don’t use log file for linux
+               }
+               String paramSalt = "";
+               
+               //c += logFile + "-E -v" + include + " -o " + outFilePath + " " + inFilePath;
+               
+               //System.out.println("_________________________ECLCC_______________________________");
+
+               ArrayList<String> al = new ArrayList<String>();
+               al.add(c);
+               al.add("-E");
+               al.add("-v");
+               al.add("--logfile");
+               al.add(logFile);
+               al.add("-o");
+               al.add(outFilePath);
+               al.add(inFilePath);
+               String [] x = new String[al.size()];
+               al.toArray(x);
+               ProcessBuilder pb = new ProcessBuilder(x);
+               System.out.println(pb.command().toString());
+               pb.redirectErrorStream(true); // merge stdout, stderr of process
+
+               File path = new File(eclccInstallDir);
+               pb.directory(path);
+               Process p = pb.start();
+               
+               InputStream iError = p.getErrorStream();
+               InputStreamReader isrError = new InputStreamReader(iError);
+               BufferedReader brErr = new BufferedReader(isrError);
+               String lineErr = "";
+               while((lineErr = brErr.readLine()) != null){
+                   System.out.println("#####"+lineErr);
+                   
+               }
+               
+              
+               
+               InputStream is = p.getInputStream();
+               InputStreamReader isr = new InputStreamReader(is);
+               BufferedReader br = new BufferedReader(isr);
+               String line;
+               
+
+               //System.out.println(c);
+               
+
+               while((line = br.readLine()) != null){
+                   System.out.println(line);
+               }
+               
+           }catch (Exception e){
+               System.out.println(e.toString());
+               e.printStackTrace();
+           }
     }
     
     /*
