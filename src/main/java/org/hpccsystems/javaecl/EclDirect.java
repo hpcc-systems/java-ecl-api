@@ -500,6 +500,18 @@ public class EclDirect {
      }
      
      public boolean writeResultsToFile(String outputDir) throws Exception{
+    	 String slash = "\\";
+     	if(outputDir.contains("/") && !outputDir.contains("\\")){
+     		slash = "/";
+     		
+     	}
+     	boolean isSlash = false;
+     	if(outputDir.lastIndexOf("\\") == (outputDir.length()-1) || outputDir.lastIndexOf("/") == (outputDir.length()-1)){
+     		isSlash = true;
+     	}
+     	if(!isSlash){
+ 			outputDir += slash;
+ 		}
     	 boolean isSuccess = true;
     	// System.out.println("writing files");
     	 ECLSoap es = getECLSoap();
@@ -527,9 +539,9 @@ public class EclDirect {
                              ArrayList results = es.parseResults(is);
                              resName = resName.replace(" ", "_");
                              String resFileName = outputDir + resName + ".csv";
-                             if (System.getProperty("os.name").startsWith("Windows")) {
-                            	 resFileName = outputDir + "\\" + resName + ".csv";
-                             }
+                             //if (System.getProperty("os.name").startsWith("Windows")) {
+                            //	 resFileName = outputDir + "\\" + resName + ".csv";
+                             //}
                              createOutputFile(results,resFileName,counter);
                              
                              String[] fileInfo = {resName, outputDir, resFileName};
@@ -550,6 +562,7 @@ public class EclDirect {
      }
      
      public void createOutputFile(ArrayList dsList,String fileName, int count){
+    	 System.out.println("Writing File New: " + fileName);
          String outStr = "";
          String header = "";
          String error = "";

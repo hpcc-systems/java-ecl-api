@@ -534,7 +534,7 @@ public class ECLSoap {
                 + "<soap:Body>"
                 + "<WUWaitComplete xmlns=\"urn:hpccsystems:ws:wsworkunits\">"
                 + "<Wuid>"+wuid+"</Wuid>"
-                + "<Wait>500000</Wait>"
+                + "<Wait></Wait>"
                 + "<ReturnOnWait>true</ReturnOnWait>"
                 + "</WUWaitComplete>"
                 + "</soap:Body>"
@@ -1139,6 +1139,7 @@ public class ECLSoap {
      * 
      */
     private String compileECL(String ecl){
+    	
         String inFile =  this.outputName + "SpoonEclCode.ecl";
         String outFile = this.outputName + "SpoonEclOut.ecl";
        
