@@ -16,6 +16,12 @@ public class HPCCServerInfo {
 		this.user=user;
 		this.pass=pass;
 	}
+	public HPCCServerInfo(String serverHost,int serverPort){
+		this.serverHost = serverHost;
+		this.serverPort = serverPort;
+		this.user="";
+		this.pass="";
+	}
 	public String[] fetchTargetClusters(){
 		//http://192.168.80.132:8010/WsTopology/TpTargetClusterQuery?ver_=1.18&wsdl
 		ClusterInfoSoap c = new ClusterInfoSoap(serverHost,serverPort,user,pass);
