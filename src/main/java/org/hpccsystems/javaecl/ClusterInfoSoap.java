@@ -27,6 +27,13 @@ public class ClusterInfoSoap {
 		this.pass=pass;
 	}
 	
+	public ClusterInfoSoap(String serverHost,int serverPort){
+		this.serverHost = serverHost;
+		this.serverPort = serverPort;
+		this.user="";
+		this.pass="";
+	}
+	
 	public String buildSoapEnv (String clusterType){
 		//http://192.168.80.132:8010/WsTopology/TpClusterQuery?ver_=1.18&wsdl
 		
