@@ -100,28 +100,32 @@ public class DeSpray implements EclCommand {
 	public String ecl() {
 		// DeSpray(logicalName, destinationIP, destinationPath, [ ,timeout ] [ ,espserverISPport ] [ ,maxConnections ] [ ,allowOverwrite ]);
 		
-		String ecl = "DeSpray(";
+		String ecl = "STD.File.DeSpray(";
 		
 		if (logicalName != null && logicalName != "" && !logicalName.equals("")) {
 			if (destinationIP != null && destinationIP != "" && !destinationIP.equals("")) {
 				if (destinationPath != null && destinationPath != "" && !destinationPath.equals("")) {
-					ecl += logicalName + ", " + destinationIP + ", " + destinationPath;
+					ecl += "'" + logicalName + "','" + destinationIP + "','" + destinationPath + "'";
 				}
 			}
 		}
+		ecl += ",";
 		if (timeout != null && timeout != "" && !timeout.equals("")) {
-			ecl += ", " + timeout;
+			ecl += timeout;
 		}
+		ecl += ",";
 		if (espserverISPport != null && espserverISPport != "" && !espserverISPport.equals("")) {
-			ecl += ", " + espserverISPport;
+			ecl += "'"+espserverISPport+"'";
 		}
+		ecl += ",";
 		if (maxConnections != null && maxConnections != "" && !maxConnections.equals("")) {
-			ecl += ", " + maxConnections;
+			ecl += maxConnections;
 		}
+		ecl += ",";
 		if (allowOverwrite != null && allowOverwrite) {
-			ecl += ", TRUE";
+			ecl += "TRUE";
 		} else if (allowOverwrite != null && !allowOverwrite) {
-			ecl += ", FALSE";
+			ecl += "FALSE";
 		}
 		
 		ecl += ");\r\n";

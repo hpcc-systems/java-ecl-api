@@ -9,6 +9,7 @@ public class HPCCServerInfo {
 	    private int serverPort;
 	    private String user;
 	    private String pass;
+	    public boolean isLogonFail = false;
 
 	public HPCCServerInfo(String serverHost,int serverPort,String user,String pass){
 		this.serverHost = serverHost;
@@ -48,6 +49,7 @@ public class HPCCServerInfo {
 				file = new ArrayList<String[]>();
 			}
 		}
+		isLogonFail = c.isLogonFail;
 		return file;
 	}
 

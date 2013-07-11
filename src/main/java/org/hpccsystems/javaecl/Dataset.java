@@ -23,6 +23,11 @@ public class Dataset implements EclCommand {
     
     private String recordDef = "";
     private String datasetDef = "";
+    
+    private Boolean hasHeaderRow = false;
+    private String csvSeparator = "";
+    private String csvTerminator = "";
+    private String csvQuote = "";
 
     public String getRecordSet() {
         return recordSet;
@@ -108,6 +113,38 @@ public class Dataset implements EclCommand {
 		this.datasetDef = datasetDef;
 	}
 
+	public Boolean getHasHeaderRow() {
+		return hasHeaderRow;
+	}
+
+	public void setHasHeaderRow(Boolean hasHeaderRow) {
+		this.hasHeaderRow = hasHeaderRow;
+	}
+
+	public String getCsvSeparator() {
+		return csvSeparator;
+	}
+
+	public void setCsvSeparator(String csvSeparator) {
+		this.csvSeparator = csvSeparator;
+	}
+
+	public String getCsvTerminator() {
+		return csvTerminator;
+	}
+
+	public void setCsvTerminator(String csvTerminator) {
+		this.csvTerminator = csvTerminator;
+	}
+
+	public String getCsvQuote() {
+		return csvQuote;
+	}
+
+	public void setCsvQuote(String csvQuote) {
+		this.csvQuote = csvQuote;
+	}
+
 	@Override
     public String ecl() {
         String recordFmt = "";
@@ -127,6 +164,32 @@ public class Dataset implements EclCommand {
         //[ attr := ] DATASET( recordset [, recstruct ] );
         
         //this one is for file inputs
+        
+        String csvFormat = "";
+        if(this.fileType.equalsIgnoreCase("CSV")){
+        	//dsStateFips := DATASET('~seer:tatefipscode', recStateFipsCode, CSV(HEADING(1)));
+        	System.out.println("Has Header Row: " + this.hasHeaderRow);
+        	if(this.hasHeaderRow){
+        		csvFormat = "HEADING(1)";
+        	}
+        	if(!this.csvTerminator.equals("")){
+        		if(!csvFormat.equals("")){csvFormat += ",";}
+        		csvFormat += "TERMINATOR(" + this.csvTerminator + ")";
+        	}
+        	if(!this.csvSeparator.equals("")){
+        		if(!csvFormat.equals("")){csvFormat += ",";}
+        		csvFormat += "SEPARATOR("+ this.csvSeparator + ")";
+        	}
+        	if(!this.csvQuote.equals("")){
+        		if(!csvFormat.equals("")){csvFormat += ",";}
+        		csvFormat += "QUOTE(" + this.csvQuote + ")";
+        	}
+        	if(!csvFormat.equals("")){
+        		fileType = "CSV(" + csvFormat + ")";
+        		
+        	}
+        }
+        
         if(logicalFileName != null && logicalFileName.length() > 0){
             System.out.println("regular dataset |" + logicalFileName +"|");
             if(recordFmt != null && recordFmt.length() > 0){

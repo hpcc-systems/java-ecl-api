@@ -28,6 +28,8 @@ public class FileInfoSoap {
 	private String pass;
 	private boolean fetchLogicalFiles = true;
 	private String numFilesToFetch = "1000";
+	private String pageStart = "0";
+	public boolean isLogonFail = false;
 	public FileInfoSoap(String serverHost,int serverPort,String user, String pass){
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
@@ -53,7 +55,7 @@ public class FileInfoSoap {
 						"<FirstN>" + numFilesToFetch + "</FirstN>" +
 						"<FirstNType></FirstNType>" +
 						"<PageSize>" + numFilesToFetch + "</PageSize>" +
-						"<PageStartFrom></PageStartFrom>" +
+						"<PageStartFrom>" + pageStart + "</PageStartFrom>" +
 						"<Sortby></Sortby>" +
 						"<Descending></Descending>" +
 						"<OneLevelDirFileReturn></OneLevelDirFileReturn>" +
@@ -164,7 +166,14 @@ public class FileInfoSoap {
 	
 				
 		try{
-			return processFileMeta(is);
+			if(soap.isLogonFail){
+				isLogonFail = soap.isLogonFail;
+				System.out.println("Authentication Failed, or you don't have permissions to read this file");
+			}else{
+				if(is != null){
+					return processFileMeta(is);
+				}
+			}
 		}catch(Exception e){
 			System.out.println(e);
 			e.printStackTrace();
@@ -197,6 +206,7 @@ public class FileInfoSoap {
                 Element ds = (Element) dfuResponse.item(i);
                 //System.out.println(ds.getFirstChild().getNodeName());
                 NodeList rowList = ds.getElementsByTagName("defFile");
+                NodeList errorList = ds.getElementsByTagName("Exceptions");
                 //System.out.println("Node:" + rowList.getLength());
                 if (rowList != null && rowList.getLength() > 0) {
 
@@ -207,11 +217,33 @@ public class FileInfoSoap {
                         xml =  new String(decoded);   
                     }
                 }
+                
+                if (errorList != null && errorList.getLength() > 0) {
+                	System.out.println("Has ERROR");
+                	for (int j = 0; j < errorList.getLength(); j++) {
+                		System.out.println("Looping error");
+                        Element row = (Element) errorList.item(j);
+                        NodeList messages = row.getElementsByTagName("Code");
+                        if (messages != null && messages.getLength() > 0) {
+                        	System.out.println("Found Code");
+                        	for (int k = 0; k < messages.getLength(); k++) {
+                        		Element messageRow = (Element) messages.item(j);
+                        		String code = messageRow.getTextContent();
+                        		System.out.println("code: " + code);
+                        		if(code.equals("3")){
+                        			isLogonFail = true;
+                        		}
+                        	}
+                        }
+                    }
+                }
 
             }
         }
         System.out.println("XML: " + xml);
-        results = parseRecordXML(xml);
+        if(!xml.equals("")){
+        	results = parseRecordXML(xml);
+        }
        // Iterator iterator = results.iterator();
         return results;
 	}

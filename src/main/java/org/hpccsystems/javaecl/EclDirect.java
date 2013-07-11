@@ -501,6 +501,9 @@ public class EclDirect {
      
      public boolean writeResultsToFile(String outputDir) throws Exception{
     	 String slash = "\\";
+    	 if(this.maxReturn.equals("0")){
+    		 return true;
+    	 }
      	if(outputDir.contains("/") && !outputDir.contains("\\")){
      		slash = "/";
      		
@@ -534,20 +537,25 @@ public class EclDirect {
 
                          if(((Column)al3.get(r)).getName().equals("Name")){
                              resName = ((Column)al3.get(r)).getValue();
+                             if(this.wuid != null && !this.wuid.equalsIgnoreCase("null")){
+	                             InputStream is = es.ResultsSoapCall(this.getWuid(), resName);
+	                             ArrayList results = es.parseResults(is);
+	                             resName = resName.replace(" ", "_");
+	                             String resFileName = outputDir + this.wuid + "_" + resName + ".csv";
+	                             String resFileNameCurr = outputDir +  resName + ".csv";
+	                             //if (System.getProperty("os.name").startsWith("Windows")) {
+	                            //	 resFileName = outputDir + "\\" + resName + ".csv";
+	                             //}
+	                             
+	                             createOutputFile(results,resFileNameCurr,counter);
+	                             createOutputFile(results,resFileName,counter);
+	                             String[] fileInfo = {resName, outputDir, resFileName};
+	                             files.add(fileInfo);
+	                             resultNames.add(resName);
+	                             counter++;
+	                             is.close();
+                         	}
                              
-                             InputStream is = es.ResultsSoapCall(this.getWuid(), resName);
-                             ArrayList results = es.parseResults(is);
-                             resName = resName.replace(" ", "_");
-                             String resFileName = outputDir + resName + ".csv";
-                             //if (System.getProperty("os.name").startsWith("Windows")) {
-                            //	 resFileName = outputDir + "\\" + resName + ".csv";
-                             //}
-                             createOutputFile(results,resFileName,counter);
-                             
-                             String[] fileInfo = {resName, outputDir, resFileName};
-                             files.add(fileInfo);
-                             resultNames.add(resName);
-                             counter++;
                          }
                      }
                      

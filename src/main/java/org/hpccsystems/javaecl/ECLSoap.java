@@ -6,6 +6,7 @@ package org.hpccsystems.javaecl;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import sun.misc.BASE64Encoder;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
 import java.util.ArrayList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -50,7 +53,7 @@ import java.util.regex.Matcher;
  * @author ChambeJX
  */
 public class ECLSoap {
-    
+	boolean isLogonFail = false;
     private String hostname = "";
     private int port = 8010;
     
@@ -518,7 +521,11 @@ public class ECLSoap {
     }
      * 
      */
-    
+    public static final String UTF8_BOM = "\uFEFF";
+    private static String removeUTF8BOM(String s) {
+        s = s.replace(UTF8_BOM, "");
+        return s;
+    }
     /*isComplete
      * 
      * @accepts String
@@ -529,62 +536,94 @@ public class ECLSoap {
      */
     public boolean isComplete(String wuid){
         boolean complete = false;
+        boolean isError = false;
+        int errorCnt = 0;
         String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                 + "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
                 + "<soap:Body>"
                 + "<WUWaitComplete xmlns=\"urn:hpccsystems:ws:wsworkunits\">"
                 + "<Wuid>"+wuid+"</Wuid>"
-                + "<Wait></Wait>"
+                + "<Wait>9000</Wait>"
                 + "<ReturnOnWait>true</ReturnOnWait>"
                 + "</WUWaitComplete>"
                 + "</soap:Body>"
                 + "</soap:Envelope>";
         String path = "/WsWorkunits/WUInfo";
-        InputStream is = this.doSoap(xml, path);        
-        try{
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(is);
+             
+        while(!complete && !isError && errorCnt<10){
+        	 
+	        try{
+	        	InputStream is = this.doSoap(xml, path);
+	            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+	            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	            
+	            StringWriter writer = new StringWriter();
+	            IOUtils.copy(is, writer,"UTF-8");
+	            String theXML = writer.toString();
+	            theXML = removeUTF8BOM(theXML);
 
-            doc.getDocumentElement().normalize();
-
-            NodeList nList = doc.getElementsByTagName("WUWaitResponse");
-            //System.out.println("-----------PARSE- " + nList.getLength() + " -----------");
-
-                    for (int temp = 0; temp < nList.getLength(); temp++) {
-                        //System.out.println("-----------"+temp+"------------");
-                       Node nNode = nList.item(temp);
-                       if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-
-                          Element eElement = (Element) nNode;
-                          NodeList nl = eElement.getChildNodes();
-
-                          for (int temp1 = 0; temp1 < nl.getLength(); temp1++) {
-                              System.out.append("parsing node --");
-                              Node node = nl.item(temp1);
-                              Element elem = (Element) node;
-                              if((node.getNodeName()).equals("StateID")){
-                                  String val = getTagValue(node.getNodeName(), eElement);
-                               // System.out.println("Node Value: " + val);
-                                if(val.equals("3")){
-                                    complete = true;
-                                }else if(val.equals("1") || val.equals("2") || val.equals("11")){
-                                    //Thread.sleep(500);
-                                    complete = isComplete(wuid);
-                                }else{
-                                    complete = false;
-                                }
-                              }
-
-                          }
-
-
-                       }
-                    }
-        
-        }catch (Exception e){
-            System.out.println(e);
-            e.printStackTrace();
+	            /*DEGUG STATMENTS
+	             System.out.println("loop for complete check");
+	             System.out.println("|" +theXML + "|");
+	             System.out.println("test:" + is.toString());
+	             System.out.println("-------------------------");
+	             System.out.println("|" +theXML + "|");
+	             System.out.println("-------------------------");
+	            */
+	            InputStream isClean = new ByteArrayInputStream(theXML.getBytes());
+	            Document doc = dBuilder.parse(isClean);
+	            
+	            is.close();
+	            doc.getDocumentElement().normalize();
+	
+	            NodeList nList = doc.getElementsByTagName("WUWaitResponse");
+	            //System.out.println("-----------PARSE- " + nList.getLength() + " -----------");
+	
+	                    for (int temp = 0; temp < nList.getLength(); temp++) {
+	                        //System.out.println("-----------"+temp+"------------");
+	                       Node nNode = nList.item(temp);
+	                       if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+	
+	                          Element eElement = (Element) nNode;
+	                          NodeList nl = eElement.getChildNodes();
+	
+	                          for (int temp1 = 0; temp1 < nl.getLength(); temp1++) {
+	                             // System.out.append("parsing node --");
+	                              Node node = nl.item(temp1);
+	                              Element elem = (Element) node;
+	                              if((node.getNodeName()).equals("StateID")){
+	                                  String val = getTagValue(node.getNodeName(), eElement);
+	                                System.out.println("Results Check Value: " + val);
+	                                if(val.equals("3")){
+	                                    complete = true;
+	                                }else if(val.equals("4")){
+	                                		System.out.println("Error State Reached");
+		                                    complete = false;
+		                                    isError = true;
+		                                    //error state
+	                                }else if(val.equals("1") || val.equals("2") || val.equals("11")){
+	                                	System.out.println("Recursion Step:::::");
+	                                	 Thread.sleep(1500);
+	                                    complete = isComplete(wuid);
+	                                }else{
+	                                	Thread.sleep(1500);
+	                                    complete = false;
+	                                }
+	                              }
+	
+	                          }
+	                          
+	
+	                       }
+	                    }
+	        is.close();
+	        }catch (Exception e){
+	        	System.out.println("---------------Error-ECLSoap:doSoap---------------");
+	            System.out.println(e);
+	            e.printStackTrace();
+	            isError = true;
+	            errorCnt++;
+	        }	
         }
         return complete;
     }
@@ -613,7 +652,7 @@ public class ECLSoap {
                 "</WUResult>"+
                 "</soap:Body>"+
                 "</soap:Envelope>";
-        
+        //System.out.println("XML for Resutls:" + xml);
         //String path = "/WsWorkunits/WUInfo";
         String path = "/WsWorkunits/WUResult?ver_=1.38";
         InputStream is = this.doSoap(xml, path);
@@ -641,13 +680,25 @@ public class ECLSoap {
              "<WUCreateAndUpdate xmlns=\"urn:hpccsystems:ws:wsworkunits\">" + 
                 "<Jobname>" + this.jobName + "</Jobname>" + 
                 "<QueryText>" + query + "</QueryText>" + 
+                "<SubmitID>" + user + "</SubmitID>" + 
                " <ApplicationValues>" + 
                    "<ApplicationValue>" + 
-                      "<Application>org.hpccsystems.eclide</Application>" + 
+                      "<Application>org.hpccsystems.spoon</Application>" + 
                       "<Name>path</Name>" +
-                      "<Value>/HelloWorld/HelloWorld.ecl</Value>" + 
+                      "<Value>/Spoon" + outputName + "/Spoon" + outputName + ".ecl</Value>" + 
                    "</ApplicationValue>" + 
+                   	"<ApplicationValue>" + 
+                   		"<Application>org.hpccsystems.spoon</Application>" + 
+                   		"<Name>owner</Name>" +
+                   		"<Value>" + user + "</Value>" + 
+                   	"</ApplicationValue>" + 
                 "</ApplicationValues>" + 
+                "<DebugValues>" +
+                	"<DebugValue>" +
+                		"<Name>created_for</Name>" +
+                		"<Value>" + user + "</Value>" +
+                	"</DebugValue>" +
+                "</DebugValues>" +
              "</WUCreateAndUpdate>" + 
           "</soapenv:Body>" + 
         "</soapenv:Envelope>";
@@ -1028,7 +1079,7 @@ public class ECLSoap {
                       NodeList nl = eElement.getChildNodes();
                       
                       for (int temp1 = 0; temp1 < nl.getLength(); temp1++) {
-                          System.out.append("parsing node --");
+                          //System.out.append("parsing node --");
                           Node node = nl.item(temp1);
                           Element elem = (Element) node;
                           if(node.getNodeName() != null)
@@ -1085,45 +1136,88 @@ public class ECLSoap {
     public InputStream doSoap(String xmldata, String path){
        ArrayList response = new ArrayList();
        String xml = "";
-       try {
-
-
-    	   	//System.out.println("ECLSoap doSoap -- User:"+user+ " " + "Pass:" + pass);
-            
-    	   	ECLAuthenticator eclauth = new ECLAuthenticator(user,pass);
-    	   	
-    	   	
-    	   	Authenticator.setDefault(eclauth);
-             
-          
-            //String encoding = new sun.misc.BASE64Encoder().encode ((user+":"+pass).getBytes());
-            String host = "http://"+hostname+":"+port+path;
-            //System.out.println("HOST: " + host);
-            URL url = new URL(host);
-            
-            
-             // Send data
-            URLConnection conn = url.openConnection();
-            conn.setDoOutput(true);
-            //conn.setRequestProperty("Authorization","Basic "+encoding);
-            conn.setRequestProperty("Post", path + " HTTP/1.0");
-            conn.setRequestProperty("Host", hostname);
-            conn.setRequestProperty("Content-Length", ""+xmldata.length() );
-            conn.setRequestProperty("Content-Type", "text/xml; charset=\"utf-8\"");
-
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(xmldata);
-            wr.flush();
-            //wr.close();
-            
-             
-            return conn.getInputStream();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+       URLConnection conn = null;
+       boolean isError = false;
+       boolean isSuccess = false;
+       
+       int errorCnt = 0;
+       InputStream is = null;
+       while(errorCnt < 5 && !isSuccess && !isLogonFail){
+	       try {
+	
+	
+	    	   	//System.out.println("ECLSoap doSoap -- User:"+user+ " " + "Pass:" + pass);
+	            
+	    	   	ECLAuthenticator eclauth = new ECLAuthenticator(user,pass);
+	    	   	
+	    	   	
+	    	   	Authenticator.setDefault(eclauth);
+	             
+	          
+	            //String encoding = new sun.misc.BASE64Encoder().encode ((user+":"+pass).getBytes());
+	            String host = "http://"+hostname+":"+port+path;
+	            //System.out.println("HOST: " + host);
+	            URL url = new URL(host);
+	            
+	            
+	             // Send data
+	            conn = url.openConnection();
+	            conn.setDoOutput(true);
+	            //added back in since Authenticator isn't allways called and the user wasn't passed if the server didn't require auth
+	            if(!user.equals("")){
+	            	String authStr = user + ":" + pass;
+	            	//System.out.println("USER INFO: " + authStr);
+	            	BASE64Encoder encoder = new BASE64Encoder();
+	            	String encoded = encoder.encode(authStr.getBytes());
+	            	
+	            	
+	            	conn.setRequestProperty("Authorization","Basic "+encoded);
+	            }
+	            
+	            conn.setRequestProperty("Post", path + " HTTP/1.0");
+	            conn.setRequestProperty("Host", hostname);
+	            conn.setRequestProperty("Content-Length", ""+xmldata.length() );
+	            conn.setRequestProperty("Content-Type", "text/xml; charset=\"utf-8\"");
+	
+	            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+	            wr.write(xmldata);
+	            wr.flush();
+	            //wr.close();
+	           // if(conn.get)
+	            if(conn instanceof HttpURLConnection){
+	            	HttpURLConnection httpConn = (HttpURLConnection)conn;
+	            	int code = httpConn.getResponseCode();
+	            	System.out.println("Connection code: " + code);
+	            	if(code == 200){
+	            		is =  conn.getInputStream();
+	            		isSuccess = true;
+	            		System.out.println("Connection success code 200 ");
+	            	}else if (code == 401){
+	            		isSuccess = false;
+	            		isLogonFail = true;
+	            		System.out.println("Permission Denied");
+	            	}
+	            }
+	            //return conn.getInputStream();
+	            
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            errorCnt++;
+	        }finally{
+	        	if(conn != null){
+	        		
+	        	}
+	        }
+	        if(!isSuccess){
+	        	try{
+	        		Thread.sleep(3500);
+	        	}catch (Exception e){
+	        		System.out.println("couldn't sleep thread");
+	        	}
+	        }
+       }
        // return new HashMap<String, String>();
-          return null;
+          return is;
     }
     
 
@@ -1423,7 +1517,7 @@ public class ECLSoap {
         public PasswordAuthentication getPasswordAuthentication() {
             // I haven't checked getRequestingScheme() here, since for NTLM
             // and Negotiate, the usrname and password are all the same.
-            System.err.println("Feeding username and password for " + getRequestingScheme() + " " + user + ":" + pass +"@"+hostname);
+           // System.err.println("Feeding username and password for " + getRequestingScheme() + " " + user + ":" + pass +"@"+hostname);
             PasswordAuthentication p = new PasswordAuthentication(user, pass.toCharArray());
            // System.out.println("_________Hostname_______"+hostname);
             return p;

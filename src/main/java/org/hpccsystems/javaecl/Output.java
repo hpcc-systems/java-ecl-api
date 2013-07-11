@@ -262,7 +262,7 @@ public class Output implements EclCommand {
                             if(this.overwrite.equals("Yes")){
                                 ecl += ",OVERWRITE";
                             }else{
-                                ecl += ",";
+                                //ecl += ",";
                             }
                             if(!this.expire.equals("")){
                                 ecl += ",EXPIRE(" + this.expire + ")";
@@ -277,16 +277,19 @@ public class Output implements EclCommand {
                     
                     //[attr := ] OUTPUT(recordset, [ format ] ,file , CSV [ (csvoptions) ] [, CLUSTER( target )] [,ENCRYPT(key) ]
                         //[, OVERWRITE ] [, EXPIRE( [ days ] ) ] )
+                	 if(this.outputFormat.equals("")){
+                         ecl += ",";
+                     }
                     if(!this.file.equals("")){
                         ecl += ",'" +this.file +"',CSV";
                         if(!this.typeOptions.equals("")){
                             ecl += "(" + this.typeOptions + ")";
                         }
                         if(!this.cluster.equals("")){
-                            ecl+= ",CLUSTER(" + this.cluster + ")";
+                            ecl+= ",CLUSTER('" + this.cluster + "')";
                         }
                         if(!this.encrypt.equals("")){
-                            ecl += ",ENCRYPT(" + this.encrypt + ")";
+                            ecl += ",ENCRYPT('" + this.encrypt + "')";
                         }
                         if(this.overwrite.equals("Yes")){
                             ecl += ",OVERWRITE";
@@ -307,22 +310,24 @@ public class Output implements EclCommand {
                     //[attr := ] OUTPUT(recordset, [ format ] ,file ,XML [ (xmloptions) ] [,ENCRYPT( key ) ] [, CLUSTER( target ) ]
                         //[, OVERWRITE ] [, EXPIRE( [ days ] ) ] )
                     
-                    
+                	 if(this.outputFormat.equals("")){
+                         ecl += ",";
+                     }
                    if(!this.file.equals("")){
                         ecl += ",'" +this.file +"',XML";
                         if(!this.typeOptions.equals("")){
                             ecl += "(" + this.typeOptions + ")";
                         }
                         if(!this.cluster.equals("")){
-                            ecl+= ",CLUSTER(" + this.cluster + ")";
+                            ecl+= ",CLUSTER('" + this.cluster + "')";
                         }
                         if(!this.encrypt.equals("")){
-                            ecl += ",ENCRYPT(" + this.encrypt + ")";
+                            ecl += ",ENCRYPT('" + this.encrypt + "')";
                         }
                         if(this.overwrite.equals("Yes")){
                             ecl += ",OVERWRITE";
                         }else{
-                            ecl += ",";
+                            //ecl += ",";
                         }
                         if(!this.expire.equals("")){
                             ecl += ",EXPIRE(" + this.expire + ")";
@@ -333,17 +338,20 @@ public class Output implements EclCommand {
                   
                     
                 }else if(this.outputType.equals("Piped")){
-                    //[attr := ] OUTPUT(recordset, [ format ] ,PIPE( pipeoptions )
-                        
+                    //PIPE waiting on confirmation of if OVERWRITE,EXPIRE,COMPRESSED,ENCRYPT is allowd
+                	//[attr := ] OUTPUT(recordset, [ format ] ,PIPE( pipeoptions )
+                       
                     //[attr := ] OUTPUT(recordset, [ format ] ,PIPE( command [, CSV | XML]) [, REPEAT] )
-                    
-                    ecl += ",PIPE(" + this.typeOptions;
+                	 if(this.outputFormat.equals("")){
+                         ecl += ",";
+                     }
+                    ecl += ",PIPE('" + this.typeOptions + "'";
                     if(this.pipeType.equals("CSV")){
                         ecl += ",CSV";
                     }else if(this.pipeType.equals("XML")){
                         ecl += ",XML";
                     }else{
-                        ecl += ",";
+                        ecl += "";
                     }
                     ecl += ")";
                     if(this.repeat.equals("Yes")){
@@ -363,7 +371,7 @@ public class Output implements EclCommand {
                     if(this.extend.equals("Yes")){
                         ecl += ",EXTEND";
                     }else{
-                        ecl += ",";
+                      //  ecl += ",";
                     }
                     
                     if(this.returnAll.equals("Yes")){
