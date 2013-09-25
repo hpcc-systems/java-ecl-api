@@ -465,9 +465,7 @@ public class EclDirect {
                      
                     if((isError || isWarning) && !error.equals("")){;
                     	this.isValid = false;
-                    	
                     }else{
-                       //System.out.println("if -- executeECL");
                        this.isValid = es.executeECL(eclCode);
                        this.setWuid(es.getWuid());
                          
@@ -476,7 +474,6 @@ public class EclDirect {
                     	   this.error += "\r\nServer Failed to compile code please refer to ECLWatch and verify your settings\r\n";
                     	   //System.out.println(this.error);
                        }
-                         
                     }
                  }else{
                 	 //System.out.println("else -- executeECL");
@@ -484,7 +481,6 @@ public class EclDirect {
                      this.setWuid(es.getWuid());
                      if(!this.isValid){
                     	 this.error += "\r\nFailed to execute code on the cluster, please verify your settings\r\n";
-                    	 //System.out.println(this.error);
                      }
                  }
        
