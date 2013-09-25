@@ -20,14 +20,24 @@ public class Spray implements EclCommand {
     private String csvQuote;
     private String recordSize;
     private String clusterName;
+    private String landingZoneOverrideIP = "";
     
     private String allowOverWrite = "true";
    
     
     private String groupName = "";
     
+    
 
-    public String getGroupName() {
+    public String getLandingZoneOverrideIP() {
+		return landingZoneOverrideIP;
+	}
+
+	public void setLandingZoneOverrideIP(String landingZoneOverrideIP) {
+		this.landingZoneOverrideIP = landingZoneOverrideIP;
+	}
+
+	public String getGroupName() {
 		return groupName;
 	}
 
@@ -130,7 +140,12 @@ public class Spray implements EclCommand {
         if (fileType != null) {
             if (fileType.equalsIgnoreCase("variable")) {
                 outputField.append("std.file.sprayVariable('");
-                outputField.append(this.ipAddress).append("',");//sourceIP
+                
+                if(this.landingZoneOverrideIP.equals("")){
+                	outputField.append(this.ipAddress).append("',");//sourceIP
+                }else{
+                	outputField.append(this.landingZoneOverrideIP).append("',");//sourcepath
+                }
                 outputField.append("'").append(this.filePath).append("',");//sourcepath
                 outputField.append(",");//maxrecordsize
                 outputField.append("'").append(this.csvSeparator).append("',");//srcCSVseparator
