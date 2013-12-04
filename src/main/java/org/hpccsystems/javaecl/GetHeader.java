@@ -35,18 +35,25 @@ public class GetHeader {
 	private String user;
 	private String pass;
 	public boolean isLogonFail = false;
+	private ArrayList<String> errors;
 	
 	public GetHeader(String serverHost,int serverPort,String user, String pass){
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
 		this.user=user;
 		this.pass=pass;
+		errors=new ArrayList<String>();
 	}
 	public GetHeader(){
 		
 	}
+	public ArrayList<String> getErrors()
+	{
+		return errors;
+	}
 	public List<Header> retrieveHeaderInformation(String fileName) {
 				
+		errors=new ArrayList<String>();
 		List<Header> headers = new ArrayList<Header>();
 		
 		try
@@ -57,6 +64,7 @@ public class GetHeader {
 		catch (Exception e)
 		{
 			e.printStackTrace();
+			errors.add(e.getMessage());
 		}
 	
 		return headers;
@@ -82,8 +90,20 @@ public class GetHeader {
 		soap.setPort(this.serverPort);
 		soap.setUser(this.user);
 		soap.setPass(this.pass);
-		InputStream is = soap.doSoap(xml, path);
+		InputStream is=null;
+		 try {
+			is = soap.doSoap(xml, path);
+	        } catch (Exception e)
+	        {
+	        	errors.add("Error sending HPCC soap request:" + e.getMessage());
+	        	e.printStackTrace();
+	        	System.out.println("Error sending soap xml: " + e.getMessage() + " xml:" + xml);
+	        }		
 		isLogonFail = soap.isLogonFail;
+		if (isLogonFail)
+		{
+			errors.add("HPCC Login Failed");
+		}
 		return is;
 	}
 
@@ -94,7 +114,9 @@ public class GetHeader {
 		List<Header> results = new ArrayList<Header>();
 		
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();       
+        DocumentBuilder db = dbf.newDocumentBuilder();    
+        
+        try {
         Document dom = db.parse(is);
         
 
@@ -133,8 +155,13 @@ public class GetHeader {
                 }
 
             }
+        
         }
-      
+        } catch(Exception e) {
+        	errors.add("Error parsing SOAP response from HPCC: " + e.getMessage());
+        	System.out.println("Error parsing SOAP response from HPCC: " + e.getMessage() );
+        	e.printStackTrace();
+        }
         return results;
 	}
 	
