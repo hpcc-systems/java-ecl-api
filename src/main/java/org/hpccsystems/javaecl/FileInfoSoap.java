@@ -30,13 +30,20 @@ public class FileInfoSoap {
 	private String numFilesToFetch = "1000";
 	private String pageStart = "0";
 	public boolean isLogonFail = false;
+	private ArrayList<String> errors;
 	public FileInfoSoap(String serverHost,int serverPort,String user, String pass){
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
 		this.user=user;
+		this.errors=new ArrayList<String>();
 		this.pass=pass;
 	}
 
+	public ArrayList<String> getErrors()
+	{
+		return errors;
+	}
+	
 	public String buildSoapEnv (String fileName){
 		//http://192.168.80.132:8010/WsDfu/DFUQuery?ver_=1.19&wsdl
 				String soap = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
@@ -130,13 +137,22 @@ public class FileInfoSoap {
 		soap.setPass(pass);
 		
 		String path = "/WsDfu/DFUQuery";
-        InputStream is = soap.doSoap(buildSoapEnv(""), path);
+        InputStream is=null;
+        try {
+			is = soap.doSoap(buildSoapEnv(""), path);
+        } catch (Exception e)
+        {
+        	errors.add("Error sending soap request:" + e.getMessage());
+        	e.printStackTrace();
+        }
         
 		try{
+
 			ArrayList<String> c = processReturn(is);
 			String[] clusters = new String[c.size()];
 		    return c.toArray(clusters);
 		}catch (Exception e){
+			errors.add(e.getMessage());
 			System.out.println("error");
 			System.out.println(e);
 		}
@@ -144,6 +160,7 @@ public class FileInfoSoap {
 	}
 	
 	public ArrayList<String[]> fetchFileMeta(String fileName){
+		errors=new ArrayList<String>();
 		String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
 				"		<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
 				"		<soap:Body>" +
@@ -153,6 +170,7 @@ public class FileInfoSoap {
 				"			</DFUDefFile>" +
 				"		</soap:Body>" +
 				"</soap:Envelope>";
+		
 		soap = new ECLSoap();
 		
 		soap.setHostname(serverHost);
@@ -161,14 +179,20 @@ public class FileInfoSoap {
 		soap.setPass(pass);
 		
 		String path = "/WsDfu/DFUDefFile?ver_=1.2";
-		
-		InputStream is = soap.doSoap(xml, path);
-	
+		InputStream is=null;
+		try {
+			is = soap.doSoap(xml, path);
+		} catch (Exception e)
+		{
+			errors.add("Error making soap request to HPCC web service " + path + ":" + e.getMessage() + " soap data:" + xml);
+			return null;
+		}
 				
 		try{
 			if(soap.isLogonFail){
 				isLogonFail = soap.isLogonFail;
 				System.out.println("Authentication Failed, or you don't have permissions to read this file");
+				errors.add("Authentication Failed, or you don't have permissions to read this file");
 			}else{
 				if(is != null){
 					return processFileMeta(is);
@@ -176,6 +200,7 @@ public class FileInfoSoap {
 			}
 		}catch(Exception e){
 			System.out.println(e);
+			errors.add(e.getMessage());
 			e.printStackTrace();
 		}
 		return null;
@@ -229,10 +254,20 @@ public class FileInfoSoap {
                         	for (int k = 0; k < messages.getLength(); k++) {
                         		Element messageRow = (Element) messages.item(j);
                         		String code = messageRow.getTextContent();
+                        		//errors.add("HPCC Error " + code);
                         		System.out.println("code: " + code);
                         		if(code.equals("3")){
                         			isLogonFail = true;
+                        			errors.add("Authentication Failed, or you don't have permissions to read this file");
                         		}
+                        	}
+                        }
+                        NodeList messages2 = row.getElementsByTagName("Message");
+                        if (messages2 != null && messages2.getLength() > 0) {
+                        	for (int k = 0; k < messages2.getLength(); k++) {
+                        		Element messageRow = (Element) messages2.item(j);
+                        		String messagestr = "HPCC error:" + messageRow.getTextContent();
+                        		errors.add(messagestr);
                         	}
                         }
                     }
@@ -252,6 +287,7 @@ public class FileInfoSoap {
 		ArrayList<String[]> results = new ArrayList<String[]>();
 		 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	        DocumentBuilder db = dbf.newDocumentBuilder();
+	        try {
 	        InputSource is = new InputSource(new StringReader(xml));
 	        Document dom = db.parse(is);
 	        
@@ -283,6 +319,11 @@ public class FileInfoSoap {
                		results.add(column);
 	    	   }
 	       }
+	        } catch (Exception e) {
+	        	errors.add("Error parsing xml response from HPCC:" + e.getMessage() + " xml:" + xml);
+	        	e.printStackTrace();
+	        	
+	        }
 	       return results;
 	}
 	
