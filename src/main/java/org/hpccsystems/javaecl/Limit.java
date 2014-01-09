@@ -130,7 +130,7 @@ public class Limit implements EclCommand {
 		boolean hasFailClause = false;
 		String ecl = result + " := LIMIT(" + recordset + ", " + maxRecs;
 		if (failClause != null && failClause != "" && !failClause.equals("")) {
-			ecl += ", FAIL(" + failClause + ")";
+			ecl += ", " + failClause + "";
 			hasFailClause = true;
 		}
 		if (!hasFailClause && onFailTransform != null && onFailTransform != "" && !onFailTransform.equals("")) {

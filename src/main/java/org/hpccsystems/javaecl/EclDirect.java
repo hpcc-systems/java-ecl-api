@@ -472,6 +472,7 @@ public class EclDirect {
                        //if not isValid add error
                        if(!this.isValid){
                     	   this.error += "\r\nServer Failed to compile code please refer to ECLWatch and verify your settings\r\n";
+                    	   this.error += es.getErrorText();
                     	   //System.out.println(this.error);
                        }
                     }
@@ -481,11 +482,13 @@ public class EclDirect {
                      this.setWuid(es.getWuid());
                      if(!this.isValid){
                     	 this.error += "\r\nFailed to execute code on the cluster, please verify your settings\r\n";
+                    	 this.error += es.getErrorText();
                      }
                  }
        
               }catch (Exception e){
             	  this.error += "Exception occured please verify all settings.";
+            	  this.error += es.getErrorText();
                   e.printStackTrace();
                   this.isValid = false;
                   System.out.println(this.error);
