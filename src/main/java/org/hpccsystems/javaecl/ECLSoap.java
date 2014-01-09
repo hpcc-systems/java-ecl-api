@@ -6,7 +6,7 @@ package org.hpccsystems.javaecl;
 import java.net.*;
 import java.io.*;
 import java.util.*;
-import sun.misc.BASE64Encoder;
+import org.apache.commons.codec.binary.Base64; 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -64,7 +64,7 @@ public class ECLSoap {
     private String maxReturn = "";
     private String cluster = "";
     private boolean includeML = false;
-    
+    private int maxRunTime=300; //in seconds, 300 is server default;
     private String outputName = "";
     
     private String wuid = "";
@@ -749,6 +749,7 @@ public class ECLSoap {
                   "<soapenv:Body>"+
                      "<WUSubmit xmlns=\"urn:hpccsystems:ws:wsworkunits\">"+
                         "<Wuid>" + wuid + "</Wuid>"+
+                        "<MaxRunTime>" + maxRunTime + "<MaxRunTime>" +
                         "<Cluster>" + this.cluster + "</Cluster>"+
                      "</WUSubmit>"+
                   "</soapenv:Body>"+
@@ -1188,8 +1189,7 @@ public class ECLSoap {
 	            if(!user.equals("")){
 	            	String authStr = user + ":" + pass;
 	            	//System.out.println("USER INFO: " + authStr);
-	            	BASE64Encoder encoder = new BASE64Encoder();
-	            	String encoded = encoder.encode(authStr.getBytes());
+	           	String encoded = new String(Base64.encodeBase64(authStr.getBytes()));
 	            	
 	            	
 	            	conn.setRequestProperty("Authorization","Basic "+encoded);
@@ -1536,7 +1536,15 @@ public class ECLSoap {
         return fileData.toString();
     }
 
-    /*
+    public int getMaxRunTime() {
+		return maxRunTime;
+	}
+
+	public void setMaxRunTime(int maxRunTime) {
+		this.maxRunTime = maxRunTime;
+	}
+
+	/*
      * ECLAuthenticator
      * 
      * Hnadles the http authentication for the soap request
