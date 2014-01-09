@@ -6,7 +6,7 @@ package org.hpccsystems.javaecl;
 import java.net.*;
 import java.io.*;
 import java.util.*;
-import sun.misc.BASE64Encoder;
+import org.apache.commons.codec.binary.Base64; 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -64,7 +64,7 @@ public class ECLSoap {
     private String maxReturn = "";
     private String cluster = "";
     private boolean includeML = false;
-    
+    private int maxRunTime=300; //in seconds, 300 is server default;
     private String outputName = "";
     
     private String wuid = "";
@@ -73,6 +73,7 @@ public class ECLSoap {
     
     private int errorCount = 0;
     private int warningCount = 0;
+    private String errorText = "";
     
     private String user = "";
     private String pass = "";
@@ -239,6 +240,8 @@ public class ECLSoap {
 	 //end getters and setters
 	
 	
+	
+	
     public ECLSoap() {
     	if (System.getProperty("os.name").startsWith("Windows")) {
     		this.tempDir = System.getProperty("java.io.tmpdir");
@@ -249,7 +252,15 @@ public class ECLSoap {
         
         //System.out.println("OS Temp Dir is: " + tempDir);
     }
-    public String syntaxCheck(String ecl){
+    public String getErrorText() {
+		return errorText;
+	}
+
+	public void setErrorText(String errorText) {
+		this.errorText = errorText;
+	}
+
+	public String syntaxCheck(String ecl){
         String res = "";
         int test = 0;
         String inFile = this.outputName + "CheckSpoonEclCode.ecl";
@@ -324,6 +335,12 @@ public class ECLSoap {
            
             pb.redirectErrorStream(true); // merge stdout, stderr of process
             System.out.println(pb.command().toString());
+	    	boolean pathExists = (new File(eclccInstallDir)).exists();
+	    	if(!pathExists){
+	    		errorCount++;
+	    		res += "Unable to locate the ecl compiler, Check Global Variables\r\n";
+	    		errorText += "Unable to locate the ecl compiler, Check Global Variables\r\n";
+	    	}
             File path = new File(eclccInstallDir);
             pb.directory(path);
             Process p = pb.start();
@@ -333,6 +350,7 @@ public class ECLSoap {
             String line;
             while((line = br.readLine()) != null){
                 res += cleanError(line)+"\r\n";
+                errorText += cleanError(line)+"\r\n";
             }
              
             InputStream iError = p.getErrorStream();
@@ -342,6 +360,7 @@ public class ECLSoap {
             while((lineErr = brErr.readLine()) != null){
 
                 res += cleanError(lineErr)+"\r\n";
+                errorText += cleanError(lineErr)+"\r\n";
             }
             
             //deleteFile(this.tempDir+inFile);
@@ -388,7 +407,7 @@ public class ECLSoap {
 	            	String ec = matcher.group();
 	            	
 	            	try{
-	                 	this.errorCount = Integer.parseInt(ec);
+	                 	this.errorCount = Integer.parseInt(ec) + this.errorCount;
 	                }catch (Exception ee){
 	                 	
 	                }
@@ -415,7 +434,7 @@ public class ECLSoap {
 	            	String wc = matcher.group();
 	            	
 	            	try{
-	                	this.warningCount = Integer.parseInt(wc);
+	                	this.warningCount = Integer.parseInt(wc) + this.warningCount;
 	                }catch (Exception we){
 	                 	
 	                }
@@ -730,6 +749,7 @@ public class ECLSoap {
                   "<soapenv:Body>"+
                      "<WUSubmit xmlns=\"urn:hpccsystems:ws:wsworkunits\">"+
                         "<Wuid>" + wuid + "</Wuid>"+
+                        "<MaxRunTime>" + maxRunTime + "<MaxRunTime>" +
                         "<Cluster>" + this.cluster + "</Cluster>"+
                      "</WUSubmit>"+
                   "</soapenv:Body>"+
@@ -737,6 +757,8 @@ public class ECLSoap {
         
         String path = "/WsWorkunits/WUSubmit";
         InputStream is2 = this.doSoap(xml, path);
+        
+        //need to check for errors here
     }
     
     /*
@@ -1139,7 +1161,7 @@ public class ECLSoap {
        URLConnection conn = null;
        boolean isError = false;
        boolean isSuccess = false;
-       
+      
        int errorCnt = 0;
        InputStream is = null;
        while(errorCnt < 5 && !isSuccess && !isLogonFail){
@@ -1167,8 +1189,7 @@ public class ECLSoap {
 	            if(!user.equals("")){
 	            	String authStr = user + ":" + pass;
 	            	//System.out.println("USER INFO: " + authStr);
-	            	BASE64Encoder encoder = new BASE64Encoder();
-	            	String encoded = encoder.encode(authStr.getBytes());
+	           	String encoded = new String(Base64.encodeBase64(authStr.getBytes()));
 	            	
 	            	
 	            	conn.setRequestProperty("Authorization","Basic "+encoded);
@@ -1266,7 +1287,12 @@ public class ECLSoap {
 
            // System.out.println("_________________________ECLCC_______________________________");
             
-            
+            boolean pathExists = (new File(eclccInstallDir)).exists();
+	    	if(!pathExists){
+	    		errorCount++;
+	    		errorText += "Unable to locate the ecl compiler, Check Global Variables\r\n";
+	    	}
+	    	
             ArrayList<String> paramsAL = new ArrayList<String>();
             paramsAL.add(c);
             paramsAL.add("-E");
@@ -1322,9 +1348,9 @@ public class ECLSoap {
            // System.out.println("+++++++++++++++++++++");
            // System.out.println("+++++++++++++++++++++");
            // System.out.println("+++++++++++++++++++++");
-            System.out.println("++++++++++Compile ECLSOAP+++++++++++");
-            System.out.println("+++++++++++++++++++++");
-            System.out.println(pb.command().toString());
+            //System.out.println("++++++++++Compile ECLSOAP+++++++++++");
+           // System.out.println("+++++++++++++++++++++");
+            //System.out.println(pb.command().toString());
             pb.redirectErrorStream(true); // merge stdout, stderr of process
 
             File path = new File(eclccInstallDir);
@@ -1337,7 +1363,7 @@ public class ECLSoap {
             String lineErr;
             while((lineErr = brErr.readLine()) != null){
                 //System.out.println("#####"+lineErr);
-                
+                errorText += lineErr + "\r\n";
             }
             
             InputStream is = p.getInputStream();
@@ -1347,6 +1373,7 @@ public class ECLSoap {
 
             while((line = br.readLine()) != null){
                 //System.out.println(line);
+            	
             }
 
             
@@ -1453,10 +1480,20 @@ public class ECLSoap {
                    System.out.println(line);
                }
                
+               
+               
            }catch (Exception e){
                System.out.println(e.toString());
                e.printStackTrace();
            }
+    	   
+    	   ECLSoap es = new ECLSoap();
+    	   es.setCluster("mythor");
+    	   es.setHostname("10.239.227.6");
+    	   es.setEclccInstallDir(eclccInstallDir);
+    	   es.setJobName("test");
+    	   es.executeECL("output('hi');");
+    	   
     }
     
     /*
@@ -1499,7 +1536,15 @@ public class ECLSoap {
         return fileData.toString();
     }
 
-    /*
+    public int getMaxRunTime() {
+		return maxRunTime;
+	}
+
+	public void setMaxRunTime(int maxRunTime) {
+		this.maxRunTime = maxRunTime;
+	}
+
+	/*
      * ECLAuthenticator
      * 
      * Hnadles the http authentication for the soap request
