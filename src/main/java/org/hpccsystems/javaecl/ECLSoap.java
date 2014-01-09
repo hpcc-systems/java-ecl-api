@@ -82,9 +82,27 @@ public class ECLSoap {
     private boolean includeSALT = false;
     private String saltLib = "";
     private ArrayList<String[]> compileFlagsAL = new ArrayList();
-
+    private String baseFileName = "SpoonEclCode.ecl";
+    private String baseCheckFileName = "CheckSpoonEclCode.ecl";
     
-    public ArrayList getCompileFlagsAL() {
+    
+    public String getBaseCheckFileName() {
+		return baseCheckFileName;
+	}
+
+	public void setBaseCheckFileName(String baseCheckFileName) {
+		this.baseCheckFileName = baseCheckFileName;
+	}
+
+	public String getBaseFileName() {
+		return baseFileName;
+	}
+
+	public void setBaseFileName(String baseFileName) {
+		this.baseFileName = baseFileName;
+	}
+
+	public ArrayList getCompileFlagsAL() {
 		return compileFlagsAL;
 	}
 
@@ -245,10 +263,13 @@ public class ECLSoap {
     public ECLSoap() {
     	if (System.getProperty("os.name").startsWith("Windows")) {
     		this.tempDir = System.getProperty("java.io.tmpdir");
+    		if(!(tempDir.endsWith("/") || tempDir.endsWith("\""))){
+    			this.tempDir += "\\";
+        	}
         } else {
         	this.tempDir = System.getProperty("java.io.tmpdir") + "/";
         } 
-
+    	
         
         //System.out.println("OS Temp Dir is: " + tempDir);
     }
@@ -263,7 +284,7 @@ public class ECLSoap {
 	public String syntaxCheck(String ecl){
         String res = "";
         int test = 0;
-        String inFile = this.outputName + "CheckSpoonEclCode.ecl";
+        String inFile = this.outputName + baseCheckFileName;
         String inFilePath = this.tempDir + inFile;
          try {
             System.out.println("Created File (synTaxCheck): " + this.tempDir + inFile);
@@ -1255,8 +1276,8 @@ public class ECLSoap {
      */
     private String compileECL(String ecl){
     	
-        String inFile =  this.outputName + "SpoonEclCode.ecl";
-        String outFile = this.outputName + "SpoonEclOut.ecl";
+        String inFile =  this.outputName + baseFileName;
+        String outFile = this.outputName + baseFileName;
        
         
         String inFilePath = this.tempDir + inFile;
@@ -1285,7 +1306,7 @@ public class ECLSoap {
             }
             String paramSalt = "";
 
-           // System.out.println("_________________________ECLCC_______________________________");
+            System.out.println("_________________________ECLCC_______________________________");
             
             boolean pathExists = (new File(eclccInstallDir)).exists();
 	    	if(!pathExists){
@@ -1350,7 +1371,7 @@ public class ECLSoap {
            // System.out.println("+++++++++++++++++++++");
             //System.out.println("++++++++++Compile ECLSOAP+++++++++++");
            // System.out.println("+++++++++++++++++++++");
-            //System.out.println(pb.command().toString());
+            System.out.println(pb.command().toString());
             pb.redirectErrorStream(true); // merge stdout, stderr of process
 
             File path = new File(eclccInstallDir);
@@ -1395,7 +1416,7 @@ public class ECLSoap {
     
     public static void main(String[] args){
     	System.out.println("Test Compile");
-
+    	ECLSoap es = new ECLSoap();
     	String eclccInstallDir = "C:\\Program Files\\HPCC Systems\\HPCC\\bin\\ver_3_0\\";
     	String tempDir = "";
     	if (System.getProperty("os.name").startsWith("Windows")) {
@@ -1404,8 +1425,8 @@ public class ECLSoap {
         	tempDir = System.getProperty("java.io.tmpdir") + "/";
         } 
     	String outputName = "Execute";
-   	 	String inFile =  outputName + "SpoonEclCode.ecl";
-   	 	String outFile = outputName + "SpoonEclOut.ecl";
+   	 	String inFile =  outputName + es.baseFileName;
+   	 	String outFile = outputName + es.baseFileName;
 
    	 	String inFilePath = tempDir + inFile;
    	 	String outFilePath = tempDir + outFile;
@@ -1487,7 +1508,7 @@ public class ECLSoap {
                e.printStackTrace();
            }
     	   
-    	   ECLSoap es = new ECLSoap();
+    	   
     	   es.setCluster("mythor");
     	   es.setHostname("10.239.227.6");
     	   es.setEclccInstallDir(eclccInstallDir);
