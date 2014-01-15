@@ -26,6 +26,7 @@ public class FileInfoSoap {
 	private int serverPort;
 	private String user;
 	private String pass;
+	private Boolean allowInvalidCerts=false;	
 	private boolean fetchLogicalFiles = true;
 	private String numFilesToFetch = "1000";
 	private String pageStart = "0";
@@ -37,6 +38,15 @@ public class FileInfoSoap {
 		this.user=user;
 		this.errors=new ArrayList<String>();
 		this.pass=pass;
+	}
+
+
+	public Boolean getAllowInvalidCerts() {
+		return allowInvalidCerts;
+	}
+
+	public void setAllowInvalidCerts(Boolean allowInvalidCerts) {
+		this.allowInvalidCerts = allowInvalidCerts;
 	}
 
 	public ArrayList<String> getErrors()
@@ -174,6 +184,7 @@ public class FileInfoSoap {
 		soap = new ECLSoap();
 		
 		soap.setHostname(serverHost);
+		soap.setAllowInvalidCerts(allowInvalidCerts);
 		soap.setPort(this.serverPort);
 		soap.setUser(user);
 		soap.setPass(pass);
