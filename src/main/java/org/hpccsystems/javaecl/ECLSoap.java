@@ -29,6 +29,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import java.util.ArrayList;
+
+import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -38,16 +40,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 
+import org.hpccsystems.javaecl.SSLUtilities;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 //import org.xml.sax.InputSource;
 
 
-
-
-
-
-        
         /**
  *
  * @author ChambeJX
@@ -64,7 +63,11 @@ public class ECLSoap {
     private String maxReturn = "";
     private String cluster = "";
     private boolean includeML = false;
-    private int maxRunTime=300; //in seconds, 300 is server default;
+    private boolean isHttps=false;
+    private boolean allowInvalidCerts=false;
+
+
+	private int maxRunTime=300; //in seconds, 300 is server default;
     private String outputName = "";
     
     private String wuid = "";
@@ -105,7 +108,21 @@ public class ECLSoap {
 	public ArrayList getCompileFlagsAL() {
 		return compileFlagsAL;
 	}
+    public boolean isHttps() {
+		return isHttps;
+	}
 
+	public void setHttps(boolean isHttps) {
+		this.isHttps = isHttps;
+	}
+
+	public boolean isAllowInvalidCerts() {
+		return allowInvalidCerts;
+	}
+
+	public void setAllowInvalidCerts(boolean allowInvalidCerts) {
+		this.allowInvalidCerts = allowInvalidCerts;
+	}
 	public void setCompileFlagsAL(ArrayList compileFlagsAL) {
 		this.compileFlagsAL = compileFlagsAL;
 	}
@@ -188,6 +205,10 @@ public class ECLSoap {
 
     public void setHostname(String hostname) {
         this.hostname = hostname;
+        if (hostname.toLowerCase().contains("https://"))
+        {
+        	this.isHttps=true;
+        }
     }
 
     public int getPort() {
@@ -770,7 +791,7 @@ public class ECLSoap {
                   "<soapenv:Body>"+
                      "<WUSubmit xmlns=\"urn:hpccsystems:ws:wsworkunits\">"+
                         "<Wuid>" + wuid + "</Wuid>"+
-                        "<MaxRunTime>" + maxRunTime + "<MaxRunTime>" +
+                        //"<MaxRunTime>" + maxRunTime + "<MaxRunTime>" +
                         "<Cluster>" + this.cluster + "</Cluster>"+
                      "</WUSubmit>"+
                   "</soapenv:Body>"+
@@ -1198,8 +1219,17 @@ public class ECLSoap {
 	             
 	          
 	            //String encoding = new sun.misc.BASE64Encoder().encode ((user+":"+pass).getBytes());
-	            String host = "http://"+hostname+":"+port+path;
-	            //System.out.println("HOST: " + host);
+	    	   	String host = "http://"+hostname+":"+port+path;
+	    	   	if (isHttps) {
+	    	   		host = "https://"+hostname+":"+port+path;
+	    	   	}
+	            
+	    	   	if (isHttps && allowInvalidCerts)
+				{
+						SSLUtilities.trustAllHttpsCertificates();
+						SSLUtilities.trustAllHostnames();
+				} 
+	    	   	//System.out.println("HOST: " + host);
 	            URL url = new URL(host);
 	            
 	            
@@ -1228,6 +1258,9 @@ public class ECLSoap {
 	           // if(conn.get)
 	            if(conn instanceof HttpURLConnection){
 	            	HttpURLConnection httpConn = (HttpURLConnection)conn;
+	            	if (isHttps) {
+	            		httpConn=(HttpsURLConnection) conn;
+	            	}
 	            	int code = httpConn.getResponseCode();
 	            	System.out.println("Connection code: " + code);
 	            	if(code == 200){

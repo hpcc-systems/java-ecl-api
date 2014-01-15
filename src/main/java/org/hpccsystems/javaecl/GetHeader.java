@@ -34,6 +34,7 @@ public class GetHeader {
 	private int serverPort;
 	private String user;
 	private String pass;
+	private Boolean allowInvalidCerts=false;
 	public boolean isLogonFail = false;
 	private ArrayList<String> errors;
 	
@@ -88,6 +89,7 @@ public class GetHeader {
 		ECLSoap soap = new ECLSoap();
 		soap.setHostname(serverHost);
 		soap.setPort(this.serverPort);
+		soap.setAllowInvalidCerts(allowInvalidCerts);
 		soap.setUser(this.user);
 		soap.setPass(this.pass);
 		InputStream is=null;
@@ -109,6 +111,12 @@ public class GetHeader {
 
 	
 
+	public Boolean getAllowInvalidCerts() {
+		return allowInvalidCerts;
+	}
+	public void setAllowInvalidCerts(Boolean allowInvalidCerts) {
+		this.allowInvalidCerts = allowInvalidCerts;
+	}
 	public List<Header> parseHeaderData(InputStream is) throws Exception {
 		
 		List<Header> results = new ArrayList<Header>();
