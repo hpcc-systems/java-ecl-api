@@ -22,6 +22,7 @@ import org.xml.sax.InputSource;
 public class FileInfoSoap {
 	ECLSoap soap;
 		
+	private Boolean isHttps=false;
 	private String serverHost;
 	private int serverPort;
 	private String user;
@@ -53,7 +54,16 @@ public class FileInfoSoap {
 	{
 		return errors;
 	}
-	
+	public Boolean isHttps() {
+		return isHttps;
+	}
+
+
+	public void setHttps(Boolean isHttps) {
+		this.isHttps = isHttps;
+	}
+
+
 	public String buildSoapEnv (String fileName){
 		//http://192.168.80.132:8010/WsDfu/DFUQuery?ver_=1.19&wsdl
 				String soap = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
@@ -145,7 +155,7 @@ public class FileInfoSoap {
 		soap.setPort(this.serverPort);
 		soap.setUser(user);
 		soap.setPass(pass);
-		
+		soap.setHttps(this.isHttps);
 		String path = "/WsDfu/DFUQuery";
         InputStream is=null;
         try {
@@ -182,12 +192,13 @@ public class FileInfoSoap {
 				"</soap:Envelope>";
 		
 		soap = new ECLSoap();
-		
+
 		soap.setHostname(serverHost);
 		soap.setAllowInvalidCerts(allowInvalidCerts);
 		soap.setPort(this.serverPort);
 		soap.setUser(user);
 		soap.setPass(pass);
+		soap.setHttps(isHttps);
 		
 		String path = "/WsDfu/DFUDefFile?ver_=1.2";
 		InputStream is=null;
@@ -366,7 +377,8 @@ public class FileInfoSoap {
 		soap.setPort(this.serverPort);
 		soap.setUser(user);
 		soap.setPass(pass);
-		
+		soap.setHttps(isHttps);
+
 		String path = "/WsDfu/DFUBrowseData?ver_=1.1";
 		
 		InputStream is = soap.doSoap(xml, path);

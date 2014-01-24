@@ -1271,19 +1271,22 @@ public class ECLSoap {
 	            		isSuccess = false;
 	            		isLogonFail = true;
 	            		System.out.println("Permission Denied");
+	            	} else if (code==-1) {
+	            		isSuccess=false;
 	            	}
 	            }
 	            //return conn.getInputStream();
 	            
 	        } catch (Exception e) {
 	            e.printStackTrace();
-	            errorCnt++;
+	            isSuccess=false;
 	        }finally{
 	        	if(conn != null){
 	        		
 	        	}
 	        }
 	        if(!isSuccess){
+	        	errorCnt++;
 	        	try{
 	        		Thread.sleep(3500);
 	        	}catch (Exception e){
