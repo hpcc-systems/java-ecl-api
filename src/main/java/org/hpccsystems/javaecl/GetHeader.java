@@ -3,6 +3,7 @@
  */
 package org.hpccsystems.javaecl;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -14,6 +15,7 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.IOUtils;
 //import org.apache.commons.lang.StringUtils;
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
@@ -31,6 +33,7 @@ public class GetHeader {
 	ECLSoap soap;
 	
 	private String serverHost;
+	private Boolean isHttps=false;
 	private int serverPort;
 	private String user;
 	private String pass;
@@ -60,7 +63,14 @@ public class GetHeader {
 		try
 		{
 			InputStream is = buildSoapRequest(fileName);
-			headers = parseHeaderData(is);						
+			String errcheck = IOUtils.toString(is, "UTF-8");
+			if (errcheck.toLowerCase().contains("could not find file")) {
+				throw new Exception(fileName + " does not exist");
+			}
+			if (errcheck.indexOf("<line>")==-1) {
+				throw new Exception(fileName + " is not a CSV File.");
+			}
+			headers = parseHeaderData(errcheck);						
 		}
 		catch (Exception e)
 		{
@@ -92,6 +102,7 @@ public class GetHeader {
 		soap.setAllowInvalidCerts(allowInvalidCerts);
 		soap.setUser(this.user);
 		soap.setPass(this.pass);
+		soap.setHttps(isHttps);
 		InputStream is=null;
 		 try {
 			is = soap.doSoap(xml, path);
@@ -110,6 +121,12 @@ public class GetHeader {
 	}
 
 	
+	public Boolean isHttps() {
+		return isHttps;
+	}
+	public void setHttps(Boolean isHttps) {
+		this.isHttps = isHttps;
+	}
 
 	public Boolean getAllowInvalidCerts() {
 		return allowInvalidCerts;
@@ -117,10 +134,14 @@ public class GetHeader {
 	public void setAllowInvalidCerts(Boolean allowInvalidCerts) {
 		this.allowInvalidCerts = allowInvalidCerts;
 	}
-	public List<Header> parseHeaderData(InputStream is) throws Exception {
-		
-		List<Header> results = new ArrayList<Header>();
-		
+	
+	public List<Header> parseHeaderData(String str) throws Exception {
+		InputStream is= new ByteArrayInputStream(str.getBytes("UTF-8"));
+		return parseHeaderData(is);
+	}
+	
+	public List<Header> parseHeaderData(InputStream is) throws Exception {		
+		List<Header> results = new ArrayList<Header>();	
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();    
         
