@@ -67,7 +67,8 @@ public class GetHeader {
 			if (errcheck.toLowerCase().contains("could not find file")) {
 				throw new Exception(fileName + " does not exist");
 			}
-			if (errcheck.indexOf("<line>")==-1) {
+			if (errcheck.indexOf("<line>")==-1
+					&& errcheck.indexOf("&lt;/line&gt;")==-1) {
 				throw new Exception(fileName + " is not a CSV File.");
 			}
 			headers = parseHeaderData(errcheck);						
