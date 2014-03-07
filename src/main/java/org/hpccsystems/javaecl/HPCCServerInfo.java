@@ -52,5 +52,11 @@ public class HPCCServerInfo {
 		isLogonFail = c.isLogonFail;
 		return file;
 	}
+	
+	public String fetchXML(String fileName){
+		FileInfoSoap c = new FileInfoSoap(serverHost,serverPort,user,pass);
+		String xml = c.recordXML(fileName);
+		return xml;
+	}
 
 }
