@@ -305,6 +305,103 @@ public class FileInfoSoap {
         return results;
 	}
 	
+	public String recordXML(String fileName){
+		String recxml = "";
+		String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+				"		<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
+				"		<soap:Body>" +
+				"			<DFUDefFile xmlns=\"urn:hpccsystems:ws:wsdfu\">" +
+				"				<Name>" + fileName + "</Name>" +
+				"				<Format>xml</Format>" +
+				"			</DFUDefFile>" +
+				"		</soap:Body>" +
+				"</soap:Envelope>";
+		soap = new ECLSoap();
+		
+		soap.setHostname(serverHost);
+		soap.setPort(this.serverPort);
+		soap.setUser(user);
+		soap.setPass(pass);
+		
+		String path = "/WsDfu/DFUDefFile?ver_=1.2";
+		
+		InputStream is = soap.doSoap(xml, path);
+		try{
+			if(soap.isLogonFail){
+				isLogonFail = soap.isLogonFail;
+				System.out.println("Authentication Failed, or you don't have permissions to read this file");
+			}else{
+				if(is != null){
+					ArrayList<String[]> results = new ArrayList<String[]>();
+					recxml = "";
+			        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			        DocumentBuilder db = dbf.newDocumentBuilder();
+			        
+			        Document dom = db.parse(is);
+
+			        Element docElement = dom.getDocumentElement();
+			        System.out.println(dom.getTextContent());
+			        NodeList dfuResponse = docElement.getElementsByTagName("DFUDefFileResponse");
+			        //DFUDefFileResponse
+			        //	defFile
+			        //  decode base64
+			        
+			        if (dfuResponse != null && dfuResponse.getLength() > 0) {
+			        	
+			           //ArrayList dsArray = new ArrayList();
+
+			           //results = dsArray;
+
+			            for (int i = 0; i < dfuResponse.getLength(); i++) {
+			            	//System.out.println("Node:" + dsList.item(i).getNodeName());
+			                Element ds = (Element) dfuResponse.item(i);
+			                //System.out.println(ds.getFirstChild().getNodeName());
+			                NodeList rowList = ds.getElementsByTagName("defFile");
+			                NodeList errorList = ds.getElementsByTagName("Exceptions");
+			                //System.out.println("Node:" + rowList.getLength());
+			                if (rowList != null && rowList.getLength() > 0) {
+
+			                    for (int j = 0; j < rowList.getLength(); j++) {
+			                        Element row = (Element) rowList.item(j);
+			                        String data = row.getTextContent();
+			                        byte[] decoded = javax.xml.bind.DatatypeConverter.parseBase64Binary(data);
+			                        recxml =  new String(decoded);   
+			                    }
+			                }
+			                
+			                if (errorList != null && errorList.getLength() > 0) {
+			                	System.out.println("Has ERROR");
+			                	for (int j = 0; j < errorList.getLength(); j++) {
+			                		System.out.println("Looping error");
+			                        Element row = (Element) errorList.item(j);
+			                        NodeList messages = row.getElementsByTagName("Code");
+			                        if (messages != null && messages.getLength() > 0) {
+			                        	System.out.println("Found Code");
+			                        	for (int k = 0; k < messages.getLength(); k++) {
+			                        		Element messageRow = (Element) messages.item(j);
+			                        		String code = messageRow.getTextContent();
+			                        		System.out.println("code: " + code);
+			                        		if(code.equals("3")){
+			                        			isLogonFail = true;
+			                        		}
+			                        	}
+			                        }
+			                    }
+			                }
+
+			            }
+			        }
+			        System.out.println("XML: " + recxml);
+				}
+			}
+		}catch(Exception e){
+			System.out.println(e);
+			e.printStackTrace();
+		}
+		
+		return recxml;
+	}
+	
 	public ArrayList<String[]> parseRecordXML(String xml) throws Exception{
 		ArrayList<String[]> results = new ArrayList<String[]>();
 		 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
