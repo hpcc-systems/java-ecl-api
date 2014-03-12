@@ -21,7 +21,7 @@ import org.xml.sax.InputSource;
 
 public class FileInfoSoap {
 	ECLSoap soap;
-		//eda
+		
 	private Boolean isHttps=false;
 	private String serverHost;
 	private int serverPort;
