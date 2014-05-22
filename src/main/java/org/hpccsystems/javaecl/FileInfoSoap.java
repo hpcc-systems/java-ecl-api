@@ -743,14 +743,13 @@ public class FileInfoSoap {
 
 	
 	public static void main(String[] args){
-		FileInfoSoap c = new FileInfoSoap("10.173.250.3", 8010,"","");
+		FileInfoSoap c = new FileInfoSoap("10.239.227.6", 8010,"","");
 		/*String[] test = c.fetchFiles();
 		System.out.println("You have " + test.length + " Files");
 		for (int i = 0; i<test.length; i++){
 			System.out.println(test[i]);
 		}*/
-		System.out.println("++" + c.getFileType("~edademo::creditsamplecsv"));
-		/*
+		
 		ArrayList<String[]> s = c.fetchFileMeta("~saltdemo::sampleusersguideinputdata");
 		ArrayList<String[]> s2 = c.fetchFileMeta("~thor::jc::test::product");
 		//ArrayList<String[]> s = c.fetchFileMeta("~in::aircraft_reference");
@@ -784,6 +783,6 @@ public class FileInfoSoap {
 				System.out.println("Default Value: " + s2.get(i)[2]);
 			}
 		}
-		*/
+		
 	}
 }
